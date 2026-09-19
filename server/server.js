@@ -220,12 +220,36 @@ app.post("/api/users/update", async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 4. POST /api/generate-descriptions: Generate 3 tone variants
+// Description Cache (propertyId + tone -> { description, detailsHash, timestamp })
+// -------------------------------------------------------------
+const descriptionCache = new Map();
+
+function computePropertyDetailsHash(data) {
+  const { 
+    address = "", 
+    bedrooms = "", 
+    bathrooms = "", 
+    sqft = "", 
+    price = "", 
+    propertyType = "", 
+    features = [], 
+    keyFeatures = [] 
+  } = data;
+  const rawFeats = keyFeatures.length > 0 ? keyFeatures : features;
+  const featsStr = Array.isArray(rawFeats) ? rawFeats.slice().sort().join("|") : String(rawFeats || "");
+  return `${String(address).trim().toLowerCase()}#${bedrooms}#${bathrooms}#${sqft}#${price}#${String(propertyType).trim().toLowerCase()}#${featsStr}`;
+}
+
+// -------------------------------------------------------------
+// 4. POST /api/generate-descriptions: Generate Luxury, Cozy, Minimalist copy
+// Supports caching per (propertyId + tone) and local mock mode under 80-100 words
 // -------------------------------------------------------------
 app.post("/api/generate-descriptions", async (req, res) => {
   try {
     const { 
-      address, 
+      propertyId,
+      tone,
+      address = "Prime Indian Residence", 
       bedrooms = 4, 
       bathrooms = 4, 
       sqft = 3500, 
@@ -235,13 +259,47 @@ app.post("/api/generate-descriptions", async (req, res) => {
       keyFeatures = [] 
     } = req.body;
 
+    const currentHash = computePropertyDetailsHash(req.body);
+    const propKey = propertyId || currentHash;
+
+    const requestedTones = tone ? [tone.toLowerCase()] : ["luxury", "cozy", "minimalist", "instagram"];
+    
+    // Check cache first
+    const cachedDescriptions = {};
+    let allCached = true;
+    for (const t of requestedTones) {
+      const cacheKey = `${propKey}_${t}`;
+      const cachedEntry = descriptionCache.get(cacheKey);
+      if (cachedEntry && cachedEntry.detailsHash === currentHash) {
+        cachedDescriptions[t] = cachedEntry.description;
+      } else {
+        allCached = false;
+      }
+    }
+
+    if (allCached && Object.keys(cachedDescriptions).length > 0) {
+      return res.json({ 
+        success: true, 
+        source: "Cache", 
+        cached: true, 
+        propertyId: propKey,
+        descriptions: cachedDescriptions 
+      });
+    }
+
     const rawFeats = keyFeatures.length > 0 ? keyFeatures : features;
-    const featureList = Array.isArray(rawFeats) ? rawFeats.join(", ") : rawFeats;
+    const featArr = Array.isArray(rawFeats) ? rawFeats : [rawFeats].filter(Boolean);
+    const featureList = featArr.join(", ");
     const typeStr = propertyType || "Luxury Residence";
     const formattedPrice = formatCurrency(price);
     const formattedSqft = formatNumber(sqft);
+    const primaryFeature = featArr[0] || "Italian marble flooring";
+    const secondaryFeature = featArr[1] || "private swimming pool";
+    const thirdFeature = featArr[2] || "panoramic open views";
 
-    // Live AI Integration (if API key present)
+    let generated = null;
+
+    // Live AI Integration (if OPENAI_API_KEY present)
     if (process.env.OPENAI_API_KEY) {
       try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -255,14 +313,16 @@ app.post("/api/generate-descriptions", async (req, res) => {
             messages: [
               {
                 role: "system",
-                content: `You are an expert Indian luxury real estate copywriter. Output ONLY a valid JSON object with keys "luxury", "cozy", and "instagram". Prices are in INR (e.g. ₹X Cr or ₹X Lakh).
-- luxury: Sophisticated, architectural prestige, bespoke finishes, grand entertaining scale.
-- cozy: Emotional, warm, family-oriented, peaceful neighborhood focus.
-- instagram: Punchy, emojis, bullet points, engaging call-to-action and 4-5 relevant hashtags.`
+                content: `You are an expert real estate copywriter. Output ONLY a valid JSON object with keys "luxury", "cozy", "minimalist", and "instagram". Prices are in INR (${formattedPrice}).
+CRITICAL REQUIREMENT: Keep every single description strictly under 80 to 100 words. High impact, elegant, and concise.
+- luxury: Sophisticated, architectural prestige, bespoke finishes, grand entertaining scale. (60-85 words)
+- cozy: Emotional, warm, family-oriented, peaceful neighborhood focus. (60-85 words)
+- minimalist: Clean modern design focused on simplicity, functional flow, natural light, and uncluttered elegance. (60-85 words)
+- instagram: Punchy hook, bullet points, emojis, call-to-action and hashtags. (under 80 words)`
               },
               {
                 role: "user",
-                content: `Property: ${address || "Prime Indian Residence"}, ${bedrooms} beds, ${bathrooms} baths, ${sqft} sqft, Price: ${formattedPrice}, Type: ${typeStr}. Features: ${featureList}.`
+                content: `Property: ${address}, ${bedrooms} beds, ${bathrooms} baths, ${sqft} sqft, Price: ${formattedPrice}, Type: ${typeStr}. Features: ${featureList}.`
               }
             ],
             response_format: { type: "json_object" }
@@ -272,26 +332,49 @@ app.post("/api/generate-descriptions", async (req, res) => {
         if (response.ok) {
           const aiData = await response.json();
           const parsed = JSON.parse(aiData.choices[0].message.content);
-          return res.json({ success: true, source: "OpenAI Live", descriptions: parsed });
+          if (parsed.luxury && parsed.cozy && (parsed.minimalist || parsed.instagram)) {
+            generated = {
+              luxury: parsed.luxury,
+              cozy: parsed.cozy,
+              minimalist: parsed.minimalist || `Clean modern design focused on simplicity, natural light, and effortless flow. Featuring ${primaryFeature.toLowerCase()} and crisp architectural lines, this ${bedrooms}-bedroom home removes clutter to highlight functional elegance. Offered at ${formattedPrice}.`,
+              instagram: parsed.instagram || `🔥 JUST LISTED: ${typeStr} in ${address.split(',')[0]}! ✨ ${bedrooms} Bed / ${bathrooms} Bath showstopper. 💎 Offered at ${formattedPrice}. DM "TOUR" for floorplans!`
+            };
+          }
         }
       } catch (err) {
-        console.warn("OpenAI call failed, falling back to smart generator:", err.message);
+        console.warn("OpenAI call failed, falling back to local mock mode:", err.message);
       }
     }
 
-    // SMART FALLBACK SIMULATOR
-    const featArr = Array.isArray(rawFeats) ? rawFeats : [rawFeats].filter(Boolean);
-    const primaryFeature = featArr[0] || "Italian marble flooring";
-    const secondaryFeature = featArr[1] || "private swimming pool";
-    const thirdFeature = featArr[2] || "panoramic open views";
+    // LOCAL MOCK MODE (when OpenAI is disabled or offline, strictly under 80-100 words)
+    if (!generated) {
+      const locName = address ? address.split(',')[0] : 'prime location';
+      generated = {
+        luxury: `Elegant premium residence with spacious interiors and refined finishes throughout in prestigious ${locName}. Spanning ${formattedSqft} square feet, this ${bedrooms}-bedroom sanctuary features ${primaryFeature.toLowerCase()}, ${secondaryFeature.toLowerCase()}, and grand entertaining scale designed for discerning living. Offered at ${formattedPrice}.`,
+        cozy: `Warm family-friendly home with inviting spaces centered on comfort and togetherness in peaceful ${locName}. Gentle natural daylight fills the ${bedrooms} bedrooms, complemented by ${primaryFeature.toLowerCase()} and a serene backyard retreat ideal for growing roots near neighborhood schools. Offered at ${formattedPrice}.`,
+        minimalist: `Clean modern design focused on simplicity, functional elegance, and seamless flow. Defined by crisp lines, open-concept living, and ${primaryFeature.toLowerCase()}, this ${bedrooms}-bed residence strips away excess to create an inspiring, tranquil environment suited for modern lifestyles. Offered at ${formattedPrice}.`,
+        instagram: `🔥 JUST LISTED: Modern ${typeStr} in ${locName}! ✨\n\n💎 ${bedrooms} Bed / ${bathrooms} Bath • ${formattedSqft} SQ FT\n💰 Offered at ${formattedPrice}\n✨ ${primaryFeature}\n✨ ${secondaryFeature}\n\nDM "TOUR" for private showings! 🥂 #LuxuryHomes #EstateCraftAI`
+      };
+    }
 
-    const generated = {
-      luxury: `Commanding a peerless address at ${address || "this distinguished enclave"}, this bespoke ${typeStr.toLowerCase()} spans ${formattedSqft} square feet of curated architectural grandeur. Defined by ${primaryFeature.toLowerCase()} alongside ${secondaryFeature.toLowerCase()}, this palatial sanctuary features ${bedrooms} palatial bedroom suites and ${bathrooms} spa-caliber baths, epitomizing the highest echelon of Indian luxury living. Offered at ${formattedPrice}.`,
-      cozy: `Welcome home to warmth, peace, and timeless comfort at ${address || "this charming haven"}. Filled with bright natural daylight and gentle breezes, this welcoming ${bedrooms}-bedroom, ${bathrooms}-bath ${typeStr.toLowerCase()} is centered around real life and joyful family gatherings. Featuring ${primaryFeature.toLowerCase()} and safe, peaceful surroundings, it offers the perfect retreat for growing roots. Offered at ${formattedPrice}.`,
-      instagram: `🔥 JUST LISTED: The Ultimate Dream Home in India! 🏡✨\n\nStop scrolling — this gorgeous ${bedrooms} Bed / ${bathrooms} Bath showstopper just hit the market! 😍\n\n💎 ${formattedSqft} SQ FT of pure modern luxury\n💰 Offered at ${formattedPrice}\n📍 ${address || "Prime Location"}\n\nHIGHLIGHTS YOU WILL OBSESS OVER:\n✨ ${primaryFeature}\n✨ ${secondaryFeature}\n✨ ${thirdFeature}\n\nTag someone who needs to see this! 👇💫\nDM us "TOUR" for floorplans and private showings! 🥂\n\n#IndianRealEstate #LuxuryHomesIndia #DreamHome #InteriorDesign #Architecture #EstateCraftAI`
-    };
+    // Save to cache per (propertyId + tone)
+    for (const t of ["luxury", "cozy", "minimalist", "instagram"]) {
+      if (generated[t]) {
+        descriptionCache.set(`${propKey}_${t}`, {
+          description: generated[t],
+          detailsHash: currentHash,
+          timestamp: Date.now()
+        });
+      }
+    }
 
-    return res.json({ success: true, source: "Smart Engine", descriptions: generated });
+    return res.json({ 
+      success: true, 
+      source: process.env.OPENAI_API_KEY && generated ? "OpenAI Live" : "Local Mock Mode", 
+      cached: false, 
+      propertyId: propKey,
+      descriptions: generated 
+    });
   } catch (error) {
     console.error("Error in generate-descriptions:", error);
     res.status(500).json({ success: false, error: "Failed to generate descriptions" });
@@ -299,7 +382,9 @@ app.post("/api/generate-descriptions", async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 5. POST /api/match-properties: AI Natural Language Matcher & Ranker
+// 5. POST /api/match-properties: Weighted Fair Scoring out of 100
+// Weights: Location Fit (40%) + Budget Fit (30%) + Style Match (20%) + Features Match (10%)
+// Displays: Match percentage & One-line AI explanation
 // -------------------------------------------------------------
 app.post("/api/match-properties", async (req, res) => {
   try {
@@ -311,7 +396,7 @@ app.post("/api/match-properties", async (req, res) => {
     const listings = await getListings();
     const queryLower = query.toLowerCase();
 
-    // Parse Indian budget terms: Crores (cr, crore) and Lakhs (lakh, lac, L)
+    // 1. Parse Budget terms (Crores & Lakhs)
     let maxBudget = null;
     const crMatch = queryLower.match(/(?:under|below|less than|max|budget of|up to|within)?\s*₹?\s*([\d,.]+)\s*(?:cr|crore|crores)\b/i);
     const lakhMatch = queryLower.match(/(?:under|below|less than|max|budget of|up to|within)?\s*₹?\s*([\d,.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
@@ -325,74 +410,184 @@ app.post("/api/match-properties", async (req, res) => {
       maxBudget = parseFloat(numMatch[1].replace(/,/g, ''));
     }
 
-    // Semantic keywords mapping for Indian real estate
-    const scoredListings = listings.map((listing) => {
-      let score = 65; // Base score
-      const reasons = [];
+    // 2. Location keywords dictionary
+    const LOCATION_KEYWORDS = [
+      { name: "Mumbai", terms: ["mumbai", "worli", "bandra", "juhu", "sea face", "marine drive", "south mumbai"] },
+      { name: "Bengaluru", terms: ["bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield", "sarjapur"] },
+      { name: "Gurugram", terms: ["gurugram", "gurgaon", "dlf", "golf course", "cyber city"] },
+      { name: "Goa", terms: ["goa", "assagao", "anjuna", "candolim", "panjim"] },
+      { name: "Hyderabad", terms: ["hyderabad", "jubilee", "banjara", "gachibowli", "hitec"] },
+      { name: "Chennai", terms: ["chennai", "boat club", "adyar", "poes garden", "ecr"] },
+      { name: "Pune", terms: ["pune", "koregaon", "kalyani nagar", "baner"] },
+      { name: "Kolkata", terms: ["kolkata", "ballygunge", "alipore", "salt lake"] }
+    ];
 
-      const fullText = [
+    // Detect if query specifies location
+    const matchedLocationObj = LOCATION_KEYWORDS.find(loc => loc.terms.some(t => queryLower.includes(t)));
+    const locationQuery = matchedLocationObj ? matchedLocationObj.name : null;
+
+    // 3. Style keywords dictionary
+    const STYLE_KEYWORDS = [
+      { name: "luxury", terms: ["luxury", "upscale", "palatial", "penthouse", "sea-facing", "sea", "ocean"] },
+      { name: "cozy", terms: ["cozy", "warm", "family", "charm", "heritage", "portuguese", "victorian", "cottage"] },
+      { name: "minimalist", terms: ["minimalist", "modern", "contemporary", "clean", "sleek", "smart home", "eco"] }
+    ];
+
+    const requestedStyles = STYLE_KEYWORDS.filter(s => s.terms.some(t => queryLower.includes(t))).map(s => s.name);
+
+    // 4. Feature keywords dictionary
+    const FEATURE_KEYWORDS = [
+      { name: "private pool", terms: ["pool", "plunge", "swimming"] },
+      { name: "garden", terms: ["garden", "lawn", "courtyard", "backyard"] },
+      { name: "schools nearby", terms: ["school", "schools", "kids"] },
+      { name: "golf views", terms: ["golf", "fairway"] },
+      { name: "sea views", terms: ["sea view", "ocean view", "sea-facing"] },
+      { name: "elevator", terms: ["elevator", "lift"] },
+      { name: "marble flooring", terms: ["marble", "italian"] },
+      { name: "smart home", terms: ["smart", "solar", "automation"] }
+    ];
+
+    const requestedFeatures = FEATURE_KEYWORDS.filter(f => f.terms.some(t => queryLower.includes(t))).map(f => f.name);
+
+    // Score every property separately with weighted criteria out of 100
+    const scoredListings = listings.map((listing) => {
+      const listingText = [
         listing.title || "",
-        listing.address,
-        listing.propertyType,
+        listing.address || "",
+        listing.propertyType || "",
         ...(listing.features || []),
+        ...(listing.keyFeatures || []),
         listing.descriptions?.luxury || "",
         listing.descriptions?.cozy || "",
+        listing.descriptions?.minimalist || "",
         listing.descriptions?.instagram || ""
       ].join(" ").toLowerCase();
 
-      // 1. Budget scoring
-      let budgetReason = '';
-      if (maxBudget) {
-        if (listing.price <= maxBudget) {
-          score += 18;
-          budgetReason = `Priced at ${formatCurrency(listing.price)}, comfortably within your ${formatCurrency(maxBudget)} budget.`;
+      // --- A. Location Fit (40% Weight) ---
+      let locationScore = 0;
+      let locationHighlight = "";
+      if (locationQuery) {
+        const matchesLoc = matchedLocationObj.terms.some(term => listingText.includes(term));
+        if (matchesLoc) {
+          locationScore = 40;
+          locationHighlight = `${matchedLocationObj.name} location`;
         } else {
-          score -= 15;
-          budgetReason = `Priced at ${formatCurrency(listing.price)}, slightly exceeding your ${formatCurrency(maxBudget)} limit.`;
+          locationScore = 12; // Mismatch penalty
         }
       } else {
-        budgetReason = `Priced at ${formatCurrency(listing.price)} (${formatNumber(listing.sqft)} sqft).`;
+        // No location requested: evaluate location quality neutrally
+        locationScore = 32;
+        locationHighlight = `${listing.address.split(',')[0]} location`;
       }
 
-      // 2. City & Location intent matching
-      const keywords = [
-        { terms: ["mumbai", "worli", "sea", "arabian sea", "ocean"], weight: 25, reason: "Matches your request for Mumbai Arabian Sea oceanfront views" },
-        { terms: ["bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield"], weight: 25, reason: "Located in Bengaluru's most sought-after tech & lifestyle corridors" },
-        { terms: ["gurugram", "gurgaon", "dlf", "golf"], weight: 25, reason: "Frontline fairway luxury overlooking DLF championship golf course" },
-        { terms: ["goa", "assagao", "portuguese"], weight: 25, reason: "Authentic Portuguese-Goan heritage villa with private lagoon pool" },
-        { terms: ["hyderabad", "jubilee"], weight: 25, reason: "Palatial modern estate in prime Jubilee Hills" },
-        { terms: ["chennai", "boat club"], weight: 25, reason: "Exclusive colonial heritage bungalow on prestigious Boat Club Road" },
-        { terms: ["pune", "koregaon"], weight: 25, reason: "Lush botanical garden villa in tranquil Koregaon Park" },
-        { terms: ["kolkata", "ballygunge"], weight: 25, reason: "Aristocratic heritage manor on historic Ballygunge Circular Road" },
-        { terms: ["pool", "plunge", "swimming"], weight: 15, reason: "Includes private swimming pool & sun deck" },
-        { terms: ["garden", "backyard", "lawn", "courtyard"], weight: 15, reason: "Features expansive private garden and open courtyards" },
-        { terms: ["school", "schools", "family"], weight: 15, reason: "Located near top-ranked international schools and family parks" },
-        { terms: ["solar", "smart", "eco"], weight: 15, reason: "100% rooftop solar energy and smart home technology" }
-      ];
-
-      keywords.forEach((kw) => {
-        const queryHasKeyword = kw.terms.some((term) => queryLower.includes(term));
-        const listingHasKeyword = kw.terms.some((term) => fullText.includes(term));
-
-        if (queryHasKeyword && listingHasKeyword) {
-          score += kw.weight;
-          reasons.push(kw.reason);
+      // --- B. Budget Fit (30% Weight) ---
+      let budgetScore = 0;
+      let budgetHighlight = "";
+      if (maxBudget) {
+        if (listing.price <= maxBudget) {
+          if (listing.price >= maxBudget * 0.70) {
+            budgetScore = 30; // Optimal match within budget
+          } else {
+            budgetScore = 26; // Well below budget
+          }
+          budgetHighlight = `pricing within your ${formatCurrency(maxBudget)} budget`;
+        } else {
+          const ratio = listing.price / maxBudget;
+          if (ratio <= 1.10) {
+            budgetScore = 18; // Slightly over budget
+          } else if (ratio <= 1.25) {
+            budgetScore = 10;
+          } else {
+            budgetScore = 5;
+          }
+          budgetHighlight = `value at ${formatCurrency(listing.price)}`;
         }
-      });
+      } else {
+        budgetScore = 25; // Neutral competitive value
+        budgetHighlight = `competitive ${formatCurrency(listing.price)} pricing`;
+      }
 
-      // Clamp score between 45% and 98%
-      const finalScore = Math.min(98, Math.max(45, score));
+      // --- C. Style Match (20% Weight) ---
+      let styleScore = 0;
+      let styleHighlight = "";
+      if (requestedStyles.length > 0) {
+        const foundStyles = requestedStyles.filter(style => {
+          const styleObj = STYLE_KEYWORDS.find(s => s.name === style);
+          return styleObj && styleObj.terms.some(t => listingText.includes(t));
+        });
 
-      // Compose human-like AI explanation
-      let matchReason = reasons.length > 0
-        ? `Why this fits: ${reasons.slice(0, 2).join(" and ")}. ${budgetReason}`
-        : `Why this fits: This ${listing.bedrooms}-bed ${listing.propertyType} in ${listing.address.split(',')[0]} aligns with your general lifestyle criteria. ${budgetReason}`;
+        if (foundStyles.length > 0) {
+          styleScore = Math.min(20, 14 + foundStyles.length * 3);
+          styleHighlight = `${foundStyles.join(' and ')} style`;
+        } else {
+          styleScore = 8;
+          styleHighlight = `${listing.propertyType} architecture`;
+        }
+      } else {
+        styleScore = 16;
+        styleHighlight = `${listing.propertyType} design`;
+      }
+
+      // --- D. Features Match (10% Weight) ---
+      let featuresScore = 0;
+      let featureHighlights = [];
+      if (requestedFeatures.length > 0) {
+        const foundFeatures = requestedFeatures.filter(fName => {
+          const featObj = FEATURE_KEYWORDS.find(f => f.name === fName);
+          return featObj && featObj.terms.some(t => listingText.includes(t));
+        });
+
+        if (foundFeatures.length >= 2) {
+          featuresScore = 10;
+          featureHighlights = foundFeatures;
+        } else if (foundFeatures.length === 1) {
+          featuresScore = 7;
+          featureHighlights = foundFeatures;
+        } else {
+          featuresScore = 4;
+        }
+      } else {
+        featuresScore = 8;
+        const feats = listing.features || listing.keyFeatures || [];
+        if (feats.length > 0) {
+          featureHighlights = [feats[0].toLowerCase()];
+        }
+      }
+
+      // Final score calculation out of 100
+      const totalScore = Math.min(98, Math.max(35, Math.round(locationScore + budgetScore + styleScore + featuresScore)));
+
+      // Generate concise One-Line AI explanation (Example: "92% Match — This property has the garden, cozy style, and nearby schools the buyer requested.")
+      const highlights = [];
+      if (featureHighlights.length > 0) {
+        highlights.push(featureHighlights.join(" and "));
+      }
+      if (styleHighlight) {
+        highlights.push(styleHighlight);
+      }
+      if (locationHighlight) {
+        highlights.push(locationHighlight);
+      }
+
+      const cleanHighlightsStr = highlights.length > 0 ? highlights.join(", ") : "desired lifestyle criteria";
+      const oneLineExplanation = `${totalScore}% Match — This property has the ${cleanHighlightsStr} the buyer requested.`;
 
       return {
         ...listing,
-        matchScore: finalScore,
-        matchReason,
-        matchReasoning: matchReason
+        matchScore: totalScore,
+        matchReason: oneLineExplanation,
+        matchReasoning: oneLineExplanation,
+        weightedBreakdown: {
+          location: locationScore,
+          locationMax: 40,
+          budget: budgetScore,
+          budgetMax: 30,
+          style: styleScore,
+          styleMax: 20,
+          features: featuresScore,
+          featuresMax: 10,
+          total: totalScore
+        }
       };
     });
 

@@ -285,31 +285,88 @@ export default function BuyerPortal({
                     </div>
                   </div>
 
-                  {/* HIGHLIGHTING AI MATCH REASONING BOX (PHASE 4 SPEC) */}
-                  <div className="rounded-2xl p-4 dark:bg-slate-900/90 bg-indigo-50/70 border dark:border-indigo-500/30 border-indigo-200 space-y-2.5 shadow-inner">
+                  {/* HIGHLIGHTING AI MATCH REASONING & FAIR WEIGHTED SCORING */}
+                  <div className="rounded-2xl p-4 dark:bg-slate-900/90 bg-indigo-50/70 border dark:border-indigo-500/30 border-indigo-200 space-y-3 shadow-inner">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                        Highlighting AI Match Reasoning
+                        Fair AI Matching • Weighted Score Breakdown
                       </h4>
-                      {/* Matched Tags breakdown badge */}
-                      {property.breakdown && (
-                        <div className="hidden sm:flex items-center gap-2.5 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                          <span>Budget: <strong className="text-emerald-600 dark:text-emerald-400">{property.breakdown.budget}%</strong></span>
-                          <span>Features: <strong className="text-indigo-600 dark:text-indigo-400">{property.breakdown.features}%</strong></span>
-                        </div>
-                      )}
+                      <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        Total: {matchPercentage} / 100
+                      </span>
                     </div>
 
-                    {/* Reasoning Content Box */}
-                    <div className="p-3.5 rounded-xl dark:bg-slate-950/70 bg-white border dark:border-slate-800 border-slate-200 text-xs dark:text-slate-200 text-slate-800 leading-relaxed font-sans shadow-sm">
-                      <strong className="text-emerald-600 dark:text-emerald-400">{t('whyFits', 'Why this property fits your criteria:')} </strong>
-                      {(property.matchReason || property.matchReasoning) ? (
-                        <span>{(property.matchReason || property.matchReasoning).replace(/^Why this fits:\s*/i, '')}</span>
-                      ) : (
-                        <span>This property matches your architectural preferences and features generous living space in a premier location.</span>
-                      )}
+                    {/* Prominent One-Line AI Explanation (Requirement 2) */}
+                    <div className="p-3.5 rounded-xl dark:bg-slate-950/80 bg-white border dark:border-slate-800 border-slate-200 text-xs font-medium dark:text-slate-200 text-slate-800 leading-relaxed shadow-sm flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold shrink-0">🎯</span>
+                      <div>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          {property.oneLineExplanation || property.explanation || property.matchReason || `${matchPercentage}% Match — This property meets the key criteria the buyer requested.`}
+                        </span>
+                      </div>
                     </div>
+
+                    {/* 4 Weighted Scoring Meters (40% / 30% / 20% / 10%) */}
+                    {property.weightedBreakdown && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        {/* Location (40%) */}
+                        <div className="p-2 rounded-xl dark:bg-slate-950/60 bg-white border dark:border-slate-800 border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold">📍 Location Fit</span>
+                            <span className="font-mono font-bold text-emerald-500">{property.weightedBreakdown.location || 0}/40</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-emerald-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, ((property.weightedBreakdown.location || 0) / 40) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Budget (30%) */}
+                        <div className="p-2 rounded-xl dark:bg-slate-950/60 bg-white border dark:border-slate-800 border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold">💰 Budget Fit</span>
+                            <span className="font-mono font-bold text-blue-500">{property.weightedBreakdown.budget || 0}/30</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-blue-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, ((property.weightedBreakdown.budget || 0) / 30) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Style (20%) */}
+                        <div className="p-2 rounded-xl dark:bg-slate-950/60 bg-white border dark:border-slate-800 border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold">🏛️ Style Match</span>
+                            <span className="font-mono font-bold text-purple-500">{property.weightedBreakdown.style || 0}/20</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-purple-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, ((property.weightedBreakdown.style || 0) / 20) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Features (10%) */}
+                        <div className="p-2 rounded-xl dark:bg-slate-950/60 bg-white border dark:border-slate-800 border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold">✨ Features Match</span>
+                            <span className="font-mono font-bold text-amber-500">{property.weightedBreakdown.features || 0}/10</span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-amber-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, ((property.weightedBreakdown.features || 0) / 10) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Matched Tags Badges */}
                     {property.matchedTags && property.matchedTags.length > 0 && (
@@ -328,15 +385,15 @@ export default function BuyerPortal({
                     )}
                   </div>
 
-                  {/* TONE / STYLE SELECTOR FOR DESCRIPTIONS */}
+                  {/* TONE / STYLE SELECTOR FOR DESCRIPTIONS (Luxury, Cozy, Minimalist, Social) */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                         <SlidersHorizontal className="w-3 h-3 text-indigo-500" />
                         Preview Listing Copy Tone:
                       </span>
 
-                      <div className="flex items-center gap-1 dark:bg-slate-900 bg-slate-100 p-1 rounded-xl border dark:border-slate-800 border-slate-200">
+                      <div className="flex items-center gap-1 dark:bg-slate-900 bg-slate-100 p-1 rounded-xl border dark:border-slate-800 border-slate-200 flex-wrap">
                         <button
                           type="button"
                           onClick={() => handleCardToneChange(property.id, 'luxury')}
@@ -358,6 +415,17 @@ export default function BuyerPortal({
                           }`}
                         >
                           <Home className="w-3 h-3" /> {t('cozyTone', 'Cozy')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCardToneChange(property.id, 'minimalist')}
+                          className={`text-xs px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1 ${
+                            currentTone === 'minimalist'
+                              ? 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 font-semibold'
+                              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          <Sparkles className="w-3 h-3" /> {t('minimalistTone', 'Minimalist')}
                         </button>
                         <button
                           type="button"

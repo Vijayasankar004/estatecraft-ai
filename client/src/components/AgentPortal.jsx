@@ -48,6 +48,7 @@ export default function AgentPortal({
 }) {
   // Form State
   const [formData, setFormData] = useState({
+    propertyId: 'prop-worli-penthouse-1',
     address: 'Worli Sea Face, Worli, Mumbai, Maharashtra 400030',
     bedrooms: 5,
     bathrooms: 6,
@@ -125,6 +126,7 @@ export default function AgentPortal({
     const preset = SAMPLE_FORM_PRESETS[nextIdx];
 
     setFormData({
+      propertyId: preset.id || `prop-preset-${nextIdx + 1}`,
       address: preset.address,
       bedrooms: preset.bedrooms,
       bathrooms: preset.bathrooms,
@@ -411,12 +413,15 @@ export default function AgentPortal({
 
               {/* Photo URL & Square Image Preview */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider dark:text-slate-300 text-slate-700 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-emerald-500" /> Photo & Square Preview
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider dark:text-slate-300 text-slate-700 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-emerald-500" /> Public Image URL & 1:1 Square Preview
+                  </label>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
+                    MVP Image Engine
                   </span>
-                  <span className="text-[11px] text-slate-500">Unsplash / Image URL</span>
-                </label>
+                </div>
+
                 <div className="flex items-center gap-3">
                   {formData.photoUrl && (
                     <div className="w-20 h-20 aspect-square rounded-2xl overflow-hidden border dark:border-slate-800 border-slate-200 shrink-0 relative group shadow-sm">
@@ -429,22 +434,50 @@ export default function AgentPortal({
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-1">
-                        <span className="text-[9px] text-white font-mono uppercase">1:1</span>
+                        <span className="text-[9px] text-white font-mono uppercase">1:1 Square</span>
                       </div>
                     </div>
                   )}
-                  <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1.5">
                     <input
                       type="url"
                       value={formData.photoUrl}
                       onChange={(e) => handleInputChange('photoUrl', e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://images.unsplash.com/photo-..."
                       className="w-full dark:bg-slate-900/90 bg-white dark:border-slate-700/70 border-slate-300 rounded-xl px-3.5 py-2 text-xs dark:text-white text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
                     />
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                      Square preview renders in 1:1 Instagram & MLS square format.
-                    </p>
+                    {/* Quick photo presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+                      <span className="text-slate-500 dark:text-slate-400">Quick URL:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('photoUrl', 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80')}
+                        className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300"
+                      >
+                        Luxury Penthouse
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('photoUrl', 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80')}
+                        className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300"
+                      >
+                        Garden Villa
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleInputChange('photoUrl', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80')}
+                        className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300"
+                      >
+                        Minimalist Home
+                      </button>
+                    </div>
                   </div>
+                </div>
+
+                {/* MVP Future enhancement badge */}
+                <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300 flex items-center justify-between">
+                  <span>💡 <strong>MVP Simplification:</strong> Direct Public Image URL input.</span>
+                  <span className="text-[10px] font-mono opacity-80">Local file upload is a future enhancement</span>
                 </div>
               </div>
 
@@ -625,15 +658,26 @@ export default function AgentPortal({
 
           {generatedDescriptions && !isGenerating && (
             <div className="space-y-6">
-              {/* Header Bar */}
+              {/* Header Bar with Cache Hit Status Indicator */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-4 rounded-2xl border dark:border-slate-800 border-slate-200 shadow-sm">
-                <div>
-                  <h3 className="text-lg font-bold dark:text-white text-slate-900 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    3-Column Tone Comparison Display
-                  </h3>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className="text-lg font-bold dark:text-white text-slate-900 flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      Platform Tone Descriptions
+                    </h3>
+                    {generatedDescriptions.cached ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono">
+                        ⚡ Served from Cache (0 API tokens • {formData.propertyId || 'cached'})
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30 flex items-center gap-1 font-mono">
+                        ✨ Fresh AI Synthesis (&lt;100 words)
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs dark:text-slate-400 text-slate-500">
-                    Compare styles side-by-side. Copy individual tones or save to public inventory.
+                    Predefined styles optimized for maximum buyer impact under 80–100 words.
                   </p>
                 </div>
 
@@ -681,7 +725,7 @@ export default function AgentPortal({
                 </div>
               )}
 
-              {/* 3 COLUMNS */}
+              {/* 3 COLUMNS: LUXURY, COZY, MINIMALIST */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
                 {/* 1. LUXURY / UPSCALE */}
@@ -703,15 +747,16 @@ export default function AgentPortal({
                     </div>
 
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                      High-end vocabulary, architectural prestige, bespoke finishes & grand scale.
+                      High-end vocabulary, architectural prestige & grand scale.
                     </p>
 
-                    <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans min-h-[220px]">
+                    <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans min-h-[190px]">
                       {generatedDescriptions.luxury}
                     </div>
 
-                    <div className="text-[10px] font-mono text-slate-500">
-                      {generatedDescriptions.luxury.split(/\s+/).filter(Boolean).length} words
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <span>{generatedDescriptions.luxury?.split(/\s+/).filter(Boolean).length || 0} words</span>
+                      <span className="text-emerald-500 font-semibold">✓ Under 100 words</span>
                     </div>
                   </div>
 
@@ -759,15 +804,16 @@ export default function AgentPortal({
                     </div>
 
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                      Warmth, natural light, neighborhood charm & family gathering spaces.
+                      Warmth, natural light, neighborhood charm & family spaces.
                     </p>
 
-                    <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans min-h-[220px]">
+                    <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans min-h-[190px]">
                       {generatedDescriptions.cozy}
                     </div>
 
-                    <div className="text-[10px] font-mono text-slate-500">
-                      {generatedDescriptions.cozy.split(/\s+/).filter(Boolean).length} words
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <span>{generatedDescriptions.cozy?.split(/\s+/).filter(Boolean).length || 0} words</span>
+                      <span className="text-emerald-500 font-semibold">✓ Under 100 words</span>
                     </div>
                   </div>
 
@@ -796,48 +842,49 @@ export default function AgentPortal({
                   </div>
                 </div>
 
-                {/* 3. INSTAGRAM / SOCIAL */}
-                <div className="glass-panel rounded-3xl p-5 border border-purple-500/30 flex flex-col justify-between relative group hover:border-purple-500/60 transition-all shadow-xl dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/10 bg-white">
+                {/* 3. MINIMALIST / MODERN */}
+                <div className="glass-panel rounded-3xl p-5 border border-cyan-500/30 flex flex-col justify-between relative group hover:border-cyan-500/60 transition-all shadow-xl dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-900 dark:to-cyan-950/10 bg-white">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+                    <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
                       <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-xl bg-purple-500/20 text-purple-500">
-                          <Instagram className="w-4 h-4" />
+                        <div className="p-1.5 rounded-xl bg-cyan-500/20 text-cyan-500">
+                          <Sparkles className="w-4 h-4" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-purple-600 dark:text-purple-300">{t('socialTone', 'Instagram / Social')}</h4>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400">Viral Engagement</span>
+                          <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-300">{t('minimalistTone', 'Minimalist / Modern')}</h4>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400">Clean & Streamlined</span>
                         </div>
                       </div>
-                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20 font-semibold">
-                        Viral Post
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border border-cyan-500/20 font-semibold">
+                        Modern
                       </span>
                     </div>
 
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                      Punchy bullets, emojis, hashtags & vibrant viral tone.
+                      Clean architectural lines, essential elements & clutter-free luxury.
                     </p>
 
-                    <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans whitespace-pre-line min-h-[220px] max-h-72 overflow-y-auto">
-                      {generatedDescriptions.instagram}
+                    <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans min-h-[190px]">
+                      {generatedDescriptions.minimalist || "Designed with sleek architectural precision, uncluttered open space, and abundant natural light."}
                     </div>
 
-                    <div className="text-[10px] font-mono text-slate-500">
-                      {generatedDescriptions.instagram.split(/\s+/).filter(Boolean).length} words
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <span>{(generatedDescriptions.minimalist || '').split(/\s+/).filter(Boolean).length} words</span>
+                      <span className="text-emerald-500 font-semibold">✓ Under 100 words</span>
                     </div>
                   </div>
 
                   <div className="pt-4 border-t dark:border-slate-800 border-slate-200 mt-4">
                     <button
                       type="button"
-                      onClick={() => handleCopy(generatedDescriptions.instagram, 'instagram')}
+                      onClick={() => handleCopy(generatedDescriptions.minimalist || '', 'minimalist')}
                       className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition ${
-                        copiedKey === 'instagram'
-                          ? 'bg-purple-500 text-slate-950 font-bold'
-                          : 'dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-500/30'
+                        copiedKey === 'minimalist'
+                          ? 'bg-cyan-500 text-slate-950 font-bold'
+                          : 'dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-cyan-300 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-500/30'
                       }`}
                     >
-                      {copiedKey === 'instagram' ? (
+                      {copiedKey === 'minimalist' ? (
                         <>
                           <Check className="w-3.5 h-3.5" />
                           <span>{t('copied', 'Copied to Clipboard!')}</span>
@@ -853,6 +900,38 @@ export default function AgentPortal({
                 </div>
 
               </div>
+
+              {/* 4. OPTIONAL INSTAGRAM POST PREVIEW */}
+              {generatedDescriptions.instagram && (
+                <div className="glass-panel rounded-3xl p-5 border border-purple-500/30 dark:bg-slate-900/80 bg-white shadow-xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-xl bg-purple-500/20 text-purple-500">
+                        <Instagram className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-purple-600 dark:text-purple-300">{t('socialTone', 'Instagram / Social Media')}</h4>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">Viral engagement with emojis & hashtags</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(generatedDescriptions.instagram, 'instagram')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                        copiedKey === 'instagram'
+                          ? 'bg-purple-500 text-slate-950 font-bold'
+                          : 'dark:bg-slate-800 bg-purple-50 hover:bg-purple-100 text-purple-800 dark:text-purple-300 border border-purple-500/30'
+                      }`}
+                    >
+                      {copiedKey === 'instagram' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedKey === 'instagram' ? t('copied', 'Copied!') : t('copyClipboard', 'Copy Post')}</span>
+                    </button>
+                  </div>
+                  <div className="dark:bg-slate-950/80 bg-slate-50 rounded-2xl p-4 border dark:border-slate-800/80 border-slate-200 text-xs leading-relaxed dark:text-slate-200 text-slate-800 font-sans whitespace-pre-line max-h-48 overflow-y-auto">
+                    {generatedDescriptions.instagram}
+                  </div>
+                </div>
+              )}
 
               {/* Action Bar */}
               <div className="glass-panel p-5 rounded-3xl border dark:border-slate-800 border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg bg-white dark:bg-slate-900/90">

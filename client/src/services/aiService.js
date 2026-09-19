@@ -68,7 +68,61 @@ export function autoClassifyVibes(propertyData) {
  * Generate 3-Column Listing Descriptions
  * Calls POST /api/generate-descriptions, falls back to local synthesis.
  */
-export async function generateListingDescriptions(propertyData, apiKey = '') {
+// -------------------------------------------------------------
+// Client-Side Description Cache: Map<propertyId_tone, { descriptions, hash }>
+// -------------------------------------------------------------
+const clientCache = new Map();
+
+function computeClientHash(data) {
+  const { 
+    address = '', 
+    bedrooms = '', 
+    bathrooms = '', 
+    sqft = '', 
+    price = '', 
+    propertyType = '', 
+    features = [], 
+    keyFeatures = [] 
+  } = data;
+  const feats = (keyFeatures.length > 0 ? keyFeatures : features).slice().sort().join('|');
+  return `${String(address).trim().toLowerCase()}#${bedrooms}#${bathrooms}#${sqft}#${price}#${String(propertyType).trim().toLowerCase()}#${feats}`;
+}
+
+/**
+ * Generate Listing Descriptions (Luxury, Cozy, Minimalist)
+ * Checks cache first using (propertyId + tone).
+ * Calls POST /api/generate-descriptions, falls back to local synthesis.
+ * All descriptions strictly under 80-100 words.
+ */
+export async function generateListingDescriptions(propertyData, apiKey = '', requestedTone = null) {
+  const currentHash = computeClientHash(propertyData);
+  const propId = propertyData.propertyId || propertyData.id || currentHash;
+
+  // Check client cache if requesting specific tone or all tones
+  if (requestedTone) {
+    const cacheKey = `${propId}_${requestedTone.toLowerCase()}`;
+    const cached = clientCache.get(cacheKey);
+    if (cached && cached.hash === currentHash) {
+      return {
+        ...cached.descriptions,
+        cached: true,
+        source: 'Cache',
+        suggestedVibes: autoClassifyVibes(propertyData)
+      };
+    }
+  } else {
+    const cacheKey = `${propId}_all`;
+    const cached = clientCache.get(cacheKey);
+    if (cached && cached.hash === currentHash) {
+      return {
+        ...cached.descriptions,
+        cached: true,
+        source: 'Cache',
+        suggestedVibes: autoClassifyVibes(propertyData)
+      };
+    }
+  }
+
   try {
     const response = await fetch('/api/generate-descriptions', {
       method: 'POST',
@@ -76,14 +130,26 @@ export async function generateListingDescriptions(propertyData, apiKey = '') {
         'Content-Type': 'application/json',
         ...(apiKey ? { 'x-gemini-key': apiKey } : {})
       },
-      body: JSON.stringify(propertyData)
+      body: JSON.stringify({
+        ...propertyData,
+        propertyId: propId,
+        tone: requestedTone
+      })
     });
 
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.descriptions) {
+        // Store in client cache
+        clientCache.set(`${propId}_all`, { descriptions: data.descriptions, hash: currentHash });
+        if (data.descriptions.luxury) clientCache.set(`${propId}_luxury`, { descriptions: data.descriptions, hash: currentHash });
+        if (data.descriptions.cozy) clientCache.set(`${propId}_cozy`, { descriptions: data.descriptions, hash: currentHash });
+        if (data.descriptions.minimalist) clientCache.set(`${propId}_minimalist`, { descriptions: data.descriptions, hash: currentHash });
+
         return {
           ...data.descriptions,
+          cached: data.cached || false,
+          source: data.source || 'AI Engine',
           suggestedVibes: data.suggestedVibes || autoClassifyVibes(propertyData)
         };
       }
@@ -92,58 +158,45 @@ export async function generateListingDescriptions(propertyData, apiKey = '') {
     console.warn('Backend /api/generate-descriptions unreachable, using local AI engine:', err.message);
   }
 
-  return generateLocalDescriptions(propertyData);
+  const localRes = generateLocalDescriptions(propertyData);
+  clientCache.set(`${propId}_all`, { descriptions: localRes, hash: currentHash });
+  return localRes;
 }
 
 function generateLocalDescriptions(data) {
-  const { address, bedrooms, bathrooms, sqft, price, keyFeatures = [], features = [], customNotes = '', propertyType = 'Property' } = data;
+  const { address = 'Prime Indian Residence', bedrooms = 4, bathrooms = 4, sqft = 3500, price = 50000000, keyFeatures = [], features = [], propertyType = 'Residence' } = data;
   const rawFeats = keyFeatures.length > 0 ? keyFeatures : features;
-  const featuresList = Array.isArray(rawFeats) ? rawFeats : [rawFeats].filter(Boolean);
+  const featArr = Array.isArray(rawFeats) ? rawFeats : [rawFeats].filter(Boolean);
   const formattedPrice = formatCurrency(price);
   const formattedSqft = formatNumber(sqft);
-  
-  const cityMatch = address.match(/,\s*([^,]+),\s*([A-Za-z\s]+)\s*\d{6}/);
-  const locationTag = cityMatch ? `${cityMatch[1]}, ${cityMatch[2]}` : address.split(',')[0] || 'Prime Location';
+  const primaryFeature = featArr[0] || 'imported Italian marble flooring';
+  const secondaryFeature = featArr[1] || 'private swimming pool';
+  const locName = address ? address.split(',')[0] : 'prime location';
 
-  const feat1 = featuresList[0] || 'an expansive open floor plan';
-  const feat2 = featuresList[1] || 'imported Italian marble flooring';
-  const feat3 = featuresList[2] || 'a luminous master suite sanctuary';
-  const feat4 = featuresList[3] || 'seamless indoor-outdoor entertaining flow';
+  // Strictly under 80-100 words each
+  const luxury = `Elegant premium residence with spacious interiors and refined finishes throughout in prestigious ${locName}. Spanning ${formattedSqft} square feet, this ${bedrooms}-bedroom sanctuary features ${primaryFeature.toLowerCase()}, ${secondaryFeature.toLowerCase()}, and grand entertaining scale designed for discerning living. Offered at ${formattedPrice}.`;
 
-  const luxury = `Commanding an exalted address at ${address}, this bespoke ${propertyType.toLowerCase()} redefines refined luxury living across ${formattedSqft} square feet. Unrivaled craftsmanship greets you upon arrival, showcasing ${feat1.toLowerCase()} alongside ${feat2.toLowerCase()}. Designed for grand entertaining and supreme privacy, the residence features ${bedrooms} palatial bedroom suites and ${bathrooms} spa-caliber baths. ${customNotes ? `${customNotes.trim()} ` : ''}A peerless sanctuary offering ${feat3.toLowerCase()} and majestic scale, curated specifically for the discerning homeowner seeking generational distinction in ${locationTag}. Offered at ${formattedPrice}.`;
+  const cozy = `Warm family-friendly home with inviting spaces centered on comfort and togetherness in peaceful ${locName}. Gentle natural daylight fills the ${bedrooms} bedrooms, complemented by ${primaryFeature.toLowerCase()} and a serene backyard retreat ideal for growing roots near neighborhood schools. Offered at ${formattedPrice}.`;
 
-  const cozy = `Welcome home to warmth, peace, and timeless comfort at ${address}. Flooded with bright natural daylight and gentle breezes, this inviting ${bedrooms}-bedroom, ${bathrooms}-bath residence is crafted around real life and joyful family gatherings. With ${formattedSqft} square feet of welcoming living space, you will fall in love with ${feat1.toLowerCase()} and ${feat2.toLowerCase()}, making morning tea and peaceful family evenings a pure joy. Step outside to discover ${feat4.toLowerCase()}, while the friendly neighborhood and peaceful surroundings make this the perfect haven for growing roots. ${customNotes ? `${customNotes.trim()} ` : ''}Offered at ${formattedPrice}.`;
+  const minimalist = `Clean modern design focused on simplicity, functional elegance, and seamless flow. Defined by crisp lines, open-concept living, and ${primaryFeature.toLowerCase()}, this ${bedrooms}-bed residence strips away excess to create an inspiring, tranquil environment suited for modern lifestyles. Offered at ${formattedPrice}.`;
 
-  const bulletFeatures = featuresList.slice(0, 5).map(f => `✨ ${f}`).join('\n');
-  const hashtagCity = cityMatch ? cityMatch[1].replace(/\s+/g, '') : 'RealEstate';
-
-  const instagram = `🔥 JUST LISTED: The Ultimate Dream Home in ${locationTag}! 🏡✨
-
-Stop scrolling — this gorgeous ${bedrooms} Bed / ${bathrooms} Bath showstopper just hit the market and it is an absolute 10/10! 😍
-
-💎 ${formattedSqft} SQ FT of pure modern elegance
-💰 Offered at ${formattedPrice}
-📍 ${address}
-
-HIGHLIGHTS YOU WILL OBSESS OVER:
-${bulletFeatures || `✨ ${feat1}\n✨ ${feat2}\n✨ ${feat3}`}
-${customNotes ? `🔑 Bonus: ${customNotes}\n` : ''}
-Tag someone who needs to move here ASAP! 👇
-📩 DM us "TOUR" for floorplans and exclusive private showing slots! 🥂
-
-#${hashtagCity}RealEstate #JustListed #DreamHome #IndianLuxuryHomes #HouseHunting #LuxuryListing #InteriorDesign #EstateCraftAI`;
+  const instagram = `🔥 JUST LISTED: Modern ${propertyType} in ${locName}! ✨\n\n💎 ${bedrooms} Bed / ${bathrooms} Bath • ${formattedSqft} SQ FT\n💰 Offered at ${formattedPrice}\n✨ ${primaryFeature}\n✨ ${secondaryFeature}\n\nDM "TOUR" for private showings! 🥂 #LuxuryHomes #EstateCraftAI`;
 
   return {
     luxury,
     cozy,
+    minimalist,
     instagram,
+    cached: false,
+    source: 'Local Mock Mode',
     suggestedVibes: autoClassifyVibes(data)
   };
 }
 
 /**
  * Match Buyer Query against Inventory
- * Calls POST /api/match-properties, falls back to local semantic engine.
+ * Weighted Fair Scoring: Location (40%) + Budget (30%) + Style (20%) + Features (10%)
+ * Returns 0-100 score with One-Line AI Explanation
  */
 export async function matchBuyerPrompt(promptText, inventoryList) {
   try {
@@ -170,7 +223,7 @@ export async function matchBuyerPrompt(promptText, inventoryList) {
 function matchLocally(promptText, inventory) {
   const query = promptText.toLowerCase();
 
-  // Parse Indian Currency Cues: Crores (cr, crore) and Lakhs (lakh, lac, L)
+  // 1. Parse Budget terms
   let maxBudget = null;
   const crMatch = query.match(/(?:under|below|less than|max|budget of|up to|within)?\s*₹?\s*([\d,.]+)\s*(?:cr|crore|crores)\b/i);
   const lakhMatch = query.match(/(?:under|below|less than|max|budget of|up to|within)?\s*₹?\s*([\d,.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
@@ -184,126 +237,145 @@ function matchLocally(promptText, inventory) {
     maxBudget = parseFloat(numMatch[1].replace(/,/g, ''));
   }
 
-  let minBeds = null;
-  const bedMatch = query.match(/(\d+)\s*(?:bed|bedroom|bhk|br)/i);
-  if (bedMatch) minBeds = parseInt(bedMatch[1], 10);
+  // 2. Dictionaries
+  const LOCATION_KEYWORDS = [
+    { name: "Mumbai", terms: ["mumbai", "worli", "bandra", "juhu", "sea face", "marine drive", "south mumbai"] },
+    { name: "Bengaluru", terms: ["bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield", "sarjapur"] },
+    { name: "Gurugram", terms: ["gurugram", "gurgaon", "dlf", "golf course", "cyber city"] },
+    { name: "Goa", terms: ["goa", "assagao", "anjuna", "candolim", "panjim"] },
+    { name: "Hyderabad", terms: ["hyderabad", "jubilee", "banjara", "gachibowli", "hitec"] },
+    { name: "Chennai", terms: ["chennai", "boat club", "adyar", "poes garden", "ecr"] },
+    { name: "Pune", terms: ["pune", "koregaon", "kalyani nagar", "baner"] },
+    { name: "Kolkata", terms: ["kolkata", "ballygunge", "alipore", "salt lake"] }
+  ];
+
+  const matchedLocationObj = LOCATION_KEYWORDS.find(loc => loc.terms.some(t => query.includes(t)));
+  const locationQuery = matchedLocationObj ? matchedLocationObj.name : null;
+
+  const STYLE_KEYWORDS = [
+    { name: "luxury", terms: ["luxury", "upscale", "palatial", "penthouse", "sea-facing", "sea", "ocean"] },
+    { name: "cozy", terms: ["cozy", "warm", "family", "charm", "heritage", "portuguese", "victorian", "cottage"] },
+    { name: "minimalist", terms: ["minimalist", "modern", "contemporary", "clean", "sleek", "smart home", "eco"] }
+  ];
+  const requestedStyles = STYLE_KEYWORDS.filter(s => s.terms.some(t => query.includes(t))).map(s => s.name);
+
+  const FEATURE_KEYWORDS = [
+    { name: "private pool", terms: ["pool", "plunge", "swimming"] },
+    { name: "garden", terms: ["garden", "lawn", "courtyard", "backyard"] },
+    { name: "schools nearby", terms: ["school", "schools", "kids"] },
+    { name: "golf views", terms: ["golf", "fairway"] },
+    { name: "sea views", terms: ["sea view", "ocean view", "sea-facing"] },
+    { name: "elevator", terms: ["elevator", "lift"] },
+    { name: "marble flooring", terms: ["marble", "italian"] },
+    { name: "smart home", terms: ["smart", "solar", "automation"] }
+  ];
+  const requestedFeatures = FEATURE_KEYWORDS.filter(f => f.terms.some(t => query.includes(t))).map(f => f.name);
 
   const results = inventory.map(property => {
-    let score = 65;
-    const matchedTags = [];
     const propText = `${property.title || ''} ${property.address || ''} ${property.propertyType || ''} ${(property.features || property.keyFeatures || []).join(' ')} ${property.customNotes || ''}`.toLowerCase();
 
-    let budgetReason = '';
+    // A. Location (40%)
+    let locationScore = 0;
+    let locationHighlight = "";
+    if (locationQuery) {
+      if (matchedLocationObj.terms.some(t => propText.includes(t))) {
+        locationScore = 40;
+        locationHighlight = `${matchedLocationObj.name} location`;
+      } else {
+        locationScore = 12;
+      }
+    } else {
+      locationScore = 32;
+      locationHighlight = `${property.address.split(',')[0]} location`;
+    }
+
+    // B. Budget (30%)
+    let budgetScore = 0;
+    let budgetHighlight = "";
     if (maxBudget) {
       if (property.price <= maxBudget) {
-        score += 18;
-        budgetReason = `Priced at ${formatCurrency(property.price)}, comfortably within your ${formatCurrency(maxBudget)} budget.`;
-        matchedTags.push('Within Budget');
+        budgetScore = (property.price >= maxBudget * 0.70) ? 30 : 26;
+        budgetHighlight = `pricing within your ${formatCurrency(maxBudget)} budget`;
       } else {
-        score -= 15;
-        budgetReason = `Priced at ${formatCurrency(property.price)}, slightly exceeding your ${formatCurrency(maxBudget)} limit.`;
+        const ratio = property.price / maxBudget;
+        budgetScore = ratio <= 1.10 ? 18 : ratio <= 1.25 ? 10 : 5;
+        budgetHighlight = `value at ${formatCurrency(property.price)}`;
       }
     } else {
-      budgetReason = `Priced competitively at ${formatCurrency(property.price)} (${formatNumber(property.sqft)} sqft).`;
+      budgetScore = 25;
+      budgetHighlight = `competitive ${formatCurrency(property.price)} pricing`;
     }
 
-    if (minBeds) {
-      if (property.bedrooms >= minBeds) {
-        score += 10;
-        matchedTags.push(`${property.bedrooms} BHK / Beds`);
+    // C. Style (20%)
+    let styleScore = 0;
+    let styleHighlight = "";
+    if (requestedStyles.length > 0) {
+      const found = requestedStyles.filter(style => {
+        const sObj = STYLE_KEYWORDS.find(s => s.name === style);
+        return sObj && sObj.terms.some(t => propText.includes(t));
+      });
+      if (found.length > 0) {
+        styleScore = Math.min(20, 14 + found.length * 3);
+        styleHighlight = `${found.join(' and ')} style`;
       } else {
-        score -= 10;
+        styleScore = 8;
+        styleHighlight = `${property.propertyType} architecture`;
+      }
+    } else {
+      styleScore = 16;
+      styleHighlight = `${property.propertyType} design`;
+    }
+
+    // D. Features (10%)
+    let featuresScore = 0;
+    let featureHighlights = [];
+    if (requestedFeatures.length > 0) {
+      const found = requestedFeatures.filter(fName => {
+        const fObj = FEATURE_KEYWORDS.find(f => f.name === fName);
+        return fObj && fObj.terms.some(t => propText.includes(t));
+      });
+      if (found.length >= 2) {
+        featuresScore = 10;
+        featureHighlights = found;
+      } else if (found.length === 1) {
+        featuresScore = 7;
+        featureHighlights = found;
+      } else {
+        featuresScore = 4;
+      }
+    } else {
+      featuresScore = 8;
+      const feats = property.features || property.keyFeatures || [];
+      if (feats.length > 0) {
+        featureHighlights = [feats[0].toLowerCase()];
       }
     }
 
-    let specificMatches = [];
+    const totalScore = Math.min(98, Math.max(35, Math.round(locationScore + budgetScore + styleScore + featuresScore)));
 
-    // City & Location checks
-    if ((query.includes('mumbai') || query.includes('worli') || query.includes('sea')) && (propText.includes('mumbai') || propText.includes('worli') || propText.includes('sea'))) {
-      score += 20;
-      specificMatches.push('Worli / Mumbai Arabian Sea frontage');
-      matchedTags.push('Sea Facing Mumbai');
-    }
-    if ((query.includes('bengaluru') || query.includes('bangalore') || query.includes('koramangala') || query.includes('indiranagar') || query.includes('whitefield')) && 
-        (propText.includes('bengaluru') || propText.includes('koramangala') || propText.includes('indiranagar') || propText.includes('whitefield'))) {
-      score += 20;
-      specificMatches.push('Bengaluru prime tech corridor location');
-      matchedTags.push('Bengaluru Prime');
-    }
-    if ((query.includes('gurugram') || query.includes('gurgaon') || query.includes('dlf') || query.includes('golf')) && 
-        (propText.includes('gurugram') || propText.includes('dlf') || propText.includes('golf'))) {
-      score += 20;
-      specificMatches.push('Golf Course Road Gurugram luxury');
-      matchedTags.push('Golf Course Facing');
-    }
-    if ((query.includes('goa') || query.includes('assagao') || query.includes('portuguese')) && 
-        (propText.includes('goa') || propText.includes('assagao') || propText.includes('portuguese'))) {
-      score += 20;
-      specificMatches.push('Portuguese-Goan heritage villa lifestyle');
-      matchedTags.push('Goa Heritage');
-    }
-    if ((query.includes('hyderabad') || query.includes('jubilee')) && (propText.includes('hyderabad') || propText.includes('jubilee'))) {
-      score += 20;
-      specificMatches.push('Jubilee Hills Hyderabad palatial estate');
-      matchedTags.push('Jubilee Hills');
-    }
-    if ((query.includes('chennai') || query.includes('boat club') || query.includes('adyar')) && (propText.includes('chennai') || propText.includes('boat club'))) {
-      score += 20;
-      specificMatches.push('Chennai Boat Club Road heritage sanctuary');
-      matchedTags.push('Boat Club Chennai');
-    }
-    if ((query.includes('pune') || query.includes('koregaon')) && (propText.includes('pune') || propText.includes('koregaon'))) {
-      score += 20;
-      specificMatches.push('Pune Koregaon Park botanical enclave');
-      matchedTags.push('Koregaon Park Pune');
-    }
-    if ((query.includes('kolkata') || query.includes('ballygunge')) && (propText.includes('kolkata') || propText.includes('ballygunge'))) {
-      score += 20;
-      specificMatches.push('Ballygunge South Kolkata historic manor');
-      matchedTags.push('Ballygunge Kolkata');
-    }
+    const highlights = [];
+    if (featureHighlights.length > 0) highlights.push(featureHighlights.join(" and "));
+    if (styleHighlight) highlights.push(styleHighlight);
+    if (locationHighlight) highlights.push(locationHighlight);
 
-    // Specific features checks
-    if ((query.includes('pool') || query.includes('plunge')) && (propText.includes('pool') || propText.includes('plunge'))) {
-      score += 12;
-      specificMatches.push('private swimming pool');
-      matchedTags.push('Private Pool');
-    }
-    if ((query.includes('garden') || query.includes('lawn') || query.includes('yard')) && (propText.includes('garden') || propText.includes('lawn'))) {
-      score += 12;
-      specificMatches.push('private landscaped garden / lawn');
-      matchedTags.push('Private Garden');
-    }
-    if (query.includes('school') && propText.includes('school')) {
-      score += 10;
-      specificMatches.push('proximity to top-rated schools');
-      matchedTags.push('Top Schools');
-    }
-    if ((query.includes('solar') || query.includes('eco')) && propText.includes('solar')) {
-      score += 10;
-      specificMatches.push('100% rooftop solar energy');
-      matchedTags.push('Solar Powered');
-    }
-
-    score = Math.min(99, Math.max(45, Math.round(score)));
-
-    let reasoning = '';
-    if (specificMatches.length > 0) {
-      reasoning = `Why this fits: This property matches your ${specificMatches.join(' and ')}. ${budgetReason} ${property.customNotes || ''}`;
-    } else {
-      reasoning = `Why this fits: Outstanding candidate in prime ${property.address.split(',')[0]} offering ${formatNumber(property.sqft)} sqft with ${(property.features || property.keyFeatures || []).slice(0, 2).join(' and ')}. ${budgetReason}`;
-    }
+    const cleanHighlightsStr = highlights.length > 0 ? highlights.join(", ") : "desired lifestyle criteria";
+    const oneLineExplanation = `${totalScore}% Match — This property has the ${cleanHighlightsStr} the buyer requested.`;
 
     return {
       ...property,
-      matchScore: score,
-      matchReason: reasoning,
-      matchReasoning: reasoning,
-      matchedTags: Array.from(new Set([...matchedTags, ...(property.vibeTags || []).slice(0, 2)])),
-      breakdown: {
-        budget: Math.min(99, Math.max(60, score - 5)),
-        features: Math.min(99, Math.max(55, score + 2)),
-        lifestyle: Math.min(99, Math.max(50, score))
+      matchScore: totalScore,
+      matchReason: oneLineExplanation,
+      matchReasoning: oneLineExplanation,
+      weightedBreakdown: {
+        location: locationScore,
+        locationMax: 40,
+        budget: budgetScore,
+        budgetMax: 30,
+        style: styleScore,
+        styleMax: 20,
+        features: featuresScore,
+        featuresMax: 10,
+        total: totalScore
       }
     };
   });

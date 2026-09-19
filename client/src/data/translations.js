@@ -50,6 +50,8 @@ export const TRANSLATIONS = {
     luxurySubtitle: "High-end vocabulary, architectural pedigree, scale",
     cozyTone: "Cozy / Family",
     cozySubtitle: "Natural light, warmth, neighborhood & school charm",
+    minimalistTone: "Minimalist / Modern",
+    minimalistSubtitle: "Clean lines, functional elegance, simplicity & light",
     socialTone: "Instagram / Social Media",
     socialSubtitle: "Hook, emojis, bullets, hashtags & DM CTA",
     copyClipboard: "Copy to Clipboard",
