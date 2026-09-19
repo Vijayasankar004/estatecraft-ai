@@ -86,7 +86,7 @@ app.get("/api/health", async (req, res) => {
   res.json({
     status: "online",
     currency: "INR (₹)",
-    mode: hasKey ? "Live AI" : "Smart Simulation (Hackathon Safe Mode)",
+    mode: hasKey ? "Live AI" : "Smart Simulation Mode",
     totalListings: listings.length,
     timestamp: new Date().toISOString()
   });

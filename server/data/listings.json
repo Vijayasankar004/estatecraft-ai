@@ -1,5 +1,24 @@
 [
   {
+    "id": "test_diag_1789817323604",
+    "address": "Penthouse 901, Altamount Road, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "sqft": 4200,
+    "price": 250000000,
+    "propertyType": "Penthouse",
+    "photoUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    "photos": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "features": [
+      "Arabian Sea View",
+      "Private Deck"
+    ],
+    "createdAt": "2026-09-19T11:28:43.612Z"
+  },
+  {
     "id": "prop-1789815834974",
     "address": "Worli Sea Face, Worli, Mumbai, Maharashtra 400030",
     "bedrooms": 5,
