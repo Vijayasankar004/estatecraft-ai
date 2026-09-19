@@ -631,11 +631,12 @@ app.get("*", (req, res, next) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
   console.log(`🚀 Real Estate AI Backend Running on port ${PORT} (INR Currency)`);
   console.log(`📡 Web Application & Health: http://localhost:${PORT}`);
   console.log(`🏠 Listings API: http://localhost:${PORT}/api/listings`);
   console.log(`⚡ Vite React Dev Server: http://localhost:3000`);
+  console.log(`🌐 Network / LAN Access: http://0.0.0.0:${PORT}`);
   console.log(`====================================================`);
 });

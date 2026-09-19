@@ -1,5 +1,92 @@
 [
   {
+    "id": "prop-1789809389656",
+    "address": "Worli Sea Face, Worli, Mumbai, Maharashtra 400030",
+    "bedrooms": 5,
+    "bathrooms": 5,
+    "sqft": 5000,
+    "price": 500000,
+    "propertyType": "Ultra-Luxury Sea-Facing Penthouse",
+    "photoUrl": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    "keyFeatures": [
+      "Unobstructed Arabian Sea Views",
+      "Private Cantilevered Plunge Pool",
+      "Italian Calacatta Marble Flooring",
+      "Direct Key-Card High-Speed Elevator",
+      "Gourmet German Poggenpohl Kitchen",
+      "Automated Smart Home Automation"
+    ],
+    "customNotes": "South Mumbai prime sea face location with sunset sea vistas and triple-tier security.",
+    "vibeTags": [
+      "#SeaFacingLuxury",
+      "#EntertainersDream",
+      "#SmartEcoHome",
+      "#SunlitSanctuary"
+    ],
+    "descriptions": {
+      "luxury": "Elegant premium residence with spacious interiors and refined finishes throughout in prestigious Worli Sea Face. Spanning 5,000 square feet, this 5-bedroom sanctuary features unobstructed arabian sea views, private cantilevered plunge pool, and grand entertaining scale designed for discerning living. Offered at ₹5 Lakh.",
+      "cozy": "Warm family-friendly home with inviting spaces centered on comfort and togetherness in peaceful Worli Sea Face. Gentle natural daylight fills the 5 bedrooms, complemented by unobstructed arabian sea views and a serene backyard retreat ideal for growing roots near neighborhood schools. Offered at ₹5 Lakh.",
+      "minimalist": "Clean modern design focused on simplicity, functional elegance, and seamless flow. Defined by crisp lines, open-concept living, and unobstructed arabian sea views, this 5-bed residence strips away excess to create an inspiring, tranquil environment suited for modern lifestyles. Offered at ₹5 Lakh.",
+      "instagram": "🔥 JUST LISTED: Modern Ultra-Luxury Sea-Facing Penthouse in Worli Sea Face! ✨\n\n💎 5 Bed / 5 Bath • 5,000 SQ FT\n💰 Offered at ₹5 Lakh\n✨ Unobstructed Arabian Sea Views\n✨ Private Cantilevered Plunge Pool\n\nDM \"TOUR\" for private showings! 🥂 #LuxuryHomes #EstateCraftAI",
+      "cached": true,
+      "source": "Cache",
+      "suggestedVibes": [
+        "#SeaFacingLuxury",
+        "#EntertainersDream",
+        "#SmartEcoHome",
+        "#SunlitSanctuary"
+      ]
+    },
+    "agentId": "usr_1789809329194",
+    "agentName": "bhuvana",
+    "agency": "Premier Realty Partners",
+    "agentContact": "+91 98000 00000",
+    "createdAt": "2026-09-19T09:16:29.660Z"
+  },
+  {
+    "id": "prop-1789809005248",
+    "address": "Worli Sea Face, Worli, Mumbai, Maharashtra 400030",
+    "bedrooms": 5,
+    "bathrooms": 6,
+    "sqft": 5800,
+    "price": 185000000,
+    "propertyType": "Ultra-Luxury Sea-Facing Penthouse",
+    "photoUrl": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    "keyFeatures": [
+      "Unobstructed Arabian Sea Views",
+      "Private Cantilevered Plunge Pool",
+      "Italian Calacatta Marble Flooring",
+      "Direct Key-Card High-Speed Elevator",
+      "Gourmet German Poggenpohl Kitchen"
+    ],
+    "customNotes": "South Mumbai prime sea face location with sunset sea vistas and triple-tier security.",
+    "vibeTags": [
+      "#SeaFacingLuxury",
+      "#EntertainersDream",
+      "#SmartEcoHome",
+      "#SunlitSanctuary"
+    ],
+    "descriptions": {
+      "luxury": "Elegant premium residence with spacious interiors and refined finishes throughout in prestigious Worli Sea Face. Spanning 5,800 square feet, this 5-bedroom sanctuary features unobstructed arabian sea views, private cantilevered plunge pool, and grand entertaining scale designed for discerning living. Offered at ₹18.50 Cr.",
+      "cozy": "Warm family-friendly home with inviting spaces centered on comfort and togetherness in peaceful Worli Sea Face. Gentle natural daylight fills the 5 bedrooms, complemented by unobstructed arabian sea views and a serene backyard retreat ideal for growing roots near neighborhood schools. Offered at ₹18.50 Cr.",
+      "minimalist": "Clean modern design focused on simplicity, functional elegance, and seamless flow. Defined by crisp lines, open-concept living, and unobstructed arabian sea views, this 5-bed residence strips away excess to create an inspiring, tranquil environment suited for modern lifestyles. Offered at ₹18.50 Cr.",
+      "instagram": "🔥 JUST LISTED: Modern Ultra-Luxury Sea-Facing Penthouse in Worli Sea Face! ✨\n\n💎 5 Bed / 6 Bath • 5,800 SQ FT\n💰 Offered at ₹18.50 Cr\n✨ Unobstructed Arabian Sea Views\n✨ Private Cantilevered Plunge Pool\n\nDM \"TOUR\" for private showings! 🥂 #LuxuryHomes #EstateCraftAI",
+      "cached": false,
+      "source": "Local Mock Mode",
+      "suggestedVibes": [
+        "#SeaFacingLuxury",
+        "#EntertainersDream",
+        "#SmartEcoHome",
+        "#SunlitSanctuary"
+      ]
+    },
+    "agentId": "usr_1789804253795",
+    "agentName": "surya",
+    "agency": "Premier Realty Partners",
+    "agentContact": "+91 98000 00000",
+    "createdAt": "2026-09-19T09:10:05.252Z"
+  },
+  {
     "id": "prop-1789804196379",
     "address": "Worli Sea Face, Worli, Mumbai, Maharashtra 400030",
     "bedrooms": 4,
