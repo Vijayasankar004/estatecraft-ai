@@ -1,0 +1,128 @@
+[
+  {
+    "id": "prop_001",
+    "address": "742 Evergreen Terrace, Portland, OR",
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "sqft": 2450,
+    "price": 685000,
+    "propertyType": "Victorian",
+    "features": [
+      "Victorian architectural details",
+      "original hardwood floors",
+      "private English garden",
+      "updated chef's kitchen",
+      "walkable to top-rated schools",
+      "classic wrap-around porch"
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "descriptions": {
+      "luxury": "An exquisite Victorian estate showcasing timeless architectural grandeur, restored hardwood flooring, and a bespoke culinary space framed by private English gardens.",
+      "cozy": "A heartwarming family sanctuary filled with sunlight, authentic character, and a blossoming garden just steps away from the neighborhood's finest elementary school.",
+      "instagram": "Historic Victorian charm meets modern luxury ✨ Wrap-around porch dreams, sunlit heirloom interiors, and the prettiest garden in Portland 🌸🏡 #DreamHome #VictorianLiving"
+    }
+  },
+  {
+    "id": "prop_002",
+    "address": "1080 Skyline Blvd, Unit 14B, Seattle, WA",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "sqft": 1250,
+    "price": 540000,
+    "propertyType": "Modern Condo",
+    "features": [
+      "modern minimalist design",
+      "floor-to-ceiling panoramic glass",
+      "steps from light rail transit",
+      "vibrant dining & nightlife district",
+      "smart home automation",
+      "private skyline balcony"
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "descriptions": {
+      "luxury": "Perched high above the metropolitan skyline, this minimalist residence embodies sleek architectural precision with curated quartz finishes and sweeping urban vistas.",
+      "cozy": "A warm, sunlit city aerie where you can sip espresso on your private balcony while enjoying total serenity above the vibrant downtown streets.",
+      "instagram": "City skyline views from bed 🏙️✨ Minimalist loft living, literally 2 mins from transit & the best espresso in town. Urban perfection! ☕🚆 #CityLife #MinimalistLoft"
+    }
+  },
+  {
+    "id": "prop_003",
+    "address": "415 Meadowlark Lane, Austin, TX",
+    "bedrooms": 3,
+    "bathrooms": 2.5,
+    "sqft": 2100,
+    "price": 495000,
+    "propertyType": "Suburban Craftsman",
+    "features": [
+      "quiet suburban neighborhood",
+      "top-ranked school district",
+      "oversized fenced backyard",
+      "modernized open-concept layout",
+      "dual vanity primary suite",
+      "attached two-car garage"
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "descriptions": {
+      "luxury": "Refined suburban sophistication defined by bespoke craftsman millwork, cathedral ceilings, and an expansive private ground ideal for serene outdoor soirees.",
+      "cozy": "The quintessential family haven on a tranquil tree-lined lane, boasting a secure backyard for play and peaceful evenings in the best school zone.",
+      "instagram": "Suburban peace and backyard goals 🌿🏡 3 beds, 2.5 baths in the #1 school district! Perfect for family weekend BBQs ☀️🍔 #FamilyHome #AustinLiving"
+    }
+  },
+  {
+    "id": "prop_004",
+    "address": "880 Bel Air Crest, Los Angeles, CA",
+    "bedrooms": 5,
+    "bathrooms": 5.5,
+    "sqft": 4800,
+    "price": 2450000,
+    "propertyType": "Contemporary Villa",
+    "features": [
+      "infinity edge pool",
+      "unobstructed canyon & ocean views",
+      "wine cellar & tasting lounge",
+      "seamless indoor-outdoor glass walls",
+      "gated private motor court"
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "descriptions": {
+      "luxury": "A trophy architectural compound delivering uncompromising luxury, monumental scale, and panoramic horizon vistas overlooking the Pacific coast.",
+      "cozy": "A breathtaking private retreat where sunset hues reflect over your tranquil infinity pool, offering peaceful seclusion just moments from the city.",
+      "instagram": "Live in pure luxury 🌴✨ Infinity pool sunsets and glass-walled vibes high in the hills. Who would you invite to this view? 🥂🌅 #LuxuryRealEstate #MansionLiving"
+    }
+  },
+  {
+    "id": "prop_005",
+    "address": "29 Maplewood Drive, Denver, CO",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "sqft": 1750,
+    "price": 420000,
+    "propertyType": "Mid-Century Ranch",
+    "features": [
+      "natural stone wood-burning fireplace",
+      "mature pine trees",
+      "quiet cul-de-sac location",
+      "hardwood flooring throughout",
+      "sunroom studio"
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "descriptions": {
+      "luxury": "A meticulously preserved mid-century modernist statement boasting authentic stone masonry, organic wood elements, and an artisan sun-drenched atelier.",
+      "cozy": "Curl up by the crackling wood fireplace as snow falls gently across towering pines outside your quiet cul-de-sac sanctuary.",
+      "instagram": "Mid-century cozy aesthetic 🌲🔥 Stone fireplace, sunny plant studio, and treehouse views. Pure Denver warmth! ☕❄️ #MidCenturyHome #CozyVibes"
+    }
+  }
+]
