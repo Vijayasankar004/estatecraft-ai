@@ -1,5 +1,57 @@
 [
   {
+    "id": "prop_auth_test_1789818471420",
+    "address": "702 Sea View Villa, Bandra West, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 120000000,
+    "agentId": "usr_agent_001",
+    "agentEmail": "vikram@sothebysrealty.in",
+    "agentName": "Vikram Malhotra",
+    "photos": [
+      "https://images.unsplash.com/photo-101.jpg",
+      "https://images.unsplash.com/photo-103.jpg"
+    ],
+    "agency": "Sotheby's International Realty Mumbai",
+    "photoUrl": "https://images.unsplash.com/photo-101.jpg",
+    "createdAt": "2026-09-19T11:47:51.425Z"
+  },
+  {
+    "id": "prop_auth_test_1789818172611",
+    "address": "702 Sea View Villa, Bandra West, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 120000000,
+    "agentId": "usr_agent_001",
+    "agentEmail": "vikram@sothebysrealty.in",
+    "agentName": "Vikram Malhotra",
+    "photos": [
+      "https://images.unsplash.com/photo-101.jpg",
+      "https://images.unsplash.com/photo-103.jpg"
+    ],
+    "agency": "Sotheby's International Realty Mumbai",
+    "photoUrl": "https://images.unsplash.com/photo-101.jpg",
+    "createdAt": "2026-09-19T11:42:52.616Z"
+  },
+  {
+    "id": "test_auth_1789818148535",
+    "address": "702 Sea View Villa, Bandra West, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 120000000,
+    "propertyType": "Sea Villa",
+    "agentId": "usr_agent_001",
+    "agentEmail": "vikram@sothebysrealty.in",
+    "agentName": "Vikram Malhotra",
+    "photos": [
+      "https://images.unsplash.com/photo-1.jpg",
+      "https://images.unsplash.com/photo-3.jpg"
+    ],
+    "agency": "Sotheby's International Realty Mumbai",
+    "photoUrl": "https://images.unsplash.com/photo-1.jpg",
+    "createdAt": "2026-09-19T11:42:28.653Z"
+  },
+  {
     "id": "test_diag_1789817323604",
     "address": "Penthouse 901, Altamount Road, Mumbai",
     "bedrooms": 4,

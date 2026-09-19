@@ -105,7 +105,7 @@ app.get("/api/listings", async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 3. POST /api/listings: Save a new property
+// 3. POST /api/listings: Save a new property (with specific agent ownership & stored photos)
 // -------------------------------------------------------------
 app.post("/api/listings", async (req, res) => {
   try {
@@ -116,18 +116,203 @@ app.post("/api/listings", async (req, res) => {
 
     const listings = await getListings();
     const id = newProperty.id || `prop_${Date.now()}`;
+
+    // Explicitly enforce specific agent ownership metadata
+    const agentId = req.headers['x-agent-id'] || newProperty.agentId || 'usr_agent_001';
+    const agentEmail = req.headers['x-agent-email'] || newProperty.agentEmail || 'vikram@sothebysrealty.in';
+    const agentName = newProperty.agentName || 'Vikram Malhotra';
+    const agency = newProperty.agency || "Sotheby's International Realty Mumbai";
+
+    // Ensure photos array is properly formatted and stored
+    const rawPhotos = Array.isArray(newProperty.photos) && newProperty.photos.length > 0
+      ? newProperty.photos
+      : (newProperty.photoUrl ? [newProperty.photoUrl] : []);
+
     const propertyWithId = {
-      id,
       ...newProperty,
-      createdAt: new Date().toISOString()
+      id,
+      agentId,
+      agentEmail,
+      agentName,
+      agency,
+      photos: rawPhotos,
+      photoUrl: rawPhotos[0] || newProperty.photoUrl || '',
+      createdAt: newProperty.createdAt || new Date().toISOString()
     };
 
-    listings.unshift(propertyWithId); // Add new listing to top
+    // If listing with same ID exists, update it in place; otherwise unshift
+    const existingIdx = listings.findIndex(l => String(l.id) === String(id));
+    if (existingIdx >= 0) {
+      listings[existingIdx] = propertyWithId;
+    } else {
+      listings.unshift(propertyWithId); // Add new listing to top
+    }
+
     await saveListings(listings);
 
     res.status(201).json({ success: true, data: propertyWithId });
   } catch (error) {
     res.status(500).json({ success: false, error: "Failed to save property" });
+  }
+});
+
+// -------------------------------------------------------------
+// POST /api/listings/:id/photos/remove: Only specific agent can remove photos
+// -------------------------------------------------------------
+app.post("/api/listings/:id/photos/remove", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { photoIndex, photoUrl } = req.body;
+
+    const requesterId = req.headers['x-agent-id'] || req.body.agentId;
+    const requesterEmail = req.headers['x-agent-email'] || req.body.agentEmail;
+
+    const listings = await getListings();
+    const listingIndex = listings.findIndex(l => String(l.id) === String(id));
+
+    if (listingIndex === -1) {
+      return res.status(404).json({ success: false, error: "Listing not found" });
+    }
+
+    const listing = listings[listingIndex];
+    const ownerId = listing.agentId;
+    const ownerEmail = listing.agentEmail;
+
+    // Check if requester matches the specific agent who uploaded this property
+    const isOwner = Boolean(
+      (ownerId && requesterId && String(ownerId) === String(requesterId)) ||
+      (ownerEmail && requesterEmail && String(ownerEmail).toLowerCase() === String(requesterEmail).toLowerCase()) ||
+      (!ownerId && !ownerEmail) // Legacy property with no assigned owner
+    );
+
+    if (!isOwner) {
+      const authorizedAgent = listing.agentName || ownerEmail || "the specific listing agent";
+      return res.status(403).json({
+        success: false,
+        error: `Permission Denied: Photos can only be removed by the specific agent who uploaded this property (${authorizedAgent}).`
+      });
+    }
+
+    // Agent is verified: proceed to remove photo
+    let currentPhotos = Array.isArray(listing.photos) ? [...listing.photos] : [listing.photoUrl].filter(Boolean);
+
+    if (typeof photoIndex === 'number' && photoIndex >= 0 && photoIndex < currentPhotos.length) {
+      currentPhotos.splice(photoIndex, 1);
+    } else if (photoUrl) {
+      currentPhotos = currentPhotos.filter(p => (typeof p === 'string' ? p : p.url) !== photoUrl);
+    } else {
+      return res.status(400).json({ success: false, error: "Must specify photoIndex or photoUrl to remove" });
+    }
+
+    listing.photos = currentPhotos;
+    listing.photoUrl = currentPhotos[0] || '';
+    listings[listingIndex] = listing;
+
+    await saveListings(listings);
+
+    res.json({
+      success: true,
+      message: "Photo removed successfully by verified agent",
+      photos: listing.photos,
+      photoUrl: listing.photoUrl
+    });
+  } catch (error) {
+    console.error("Remove photo error:", error);
+    res.status(500).json({ success: false, error: "Failed to remove photo" });
+  }
+});
+
+// -------------------------------------------------------------
+// POST /api/listings/:id/photos/add: Append new photos to stored listing by specific agent
+// -------------------------------------------------------------
+app.post("/api/listings/:id/photos/add", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { photos: newPhotos } = req.body;
+
+    if (!Array.isArray(newPhotos) || newPhotos.length === 0) {
+      return res.status(400).json({ success: false, error: "Photos array is required" });
+    }
+
+    const requesterId = req.headers['x-agent-id'] || req.body.agentId;
+    const requesterEmail = req.headers['x-agent-email'] || req.body.agentEmail;
+
+    const listings = await getListings();
+    const listingIndex = listings.findIndex(l => String(l.id) === String(id));
+
+    if (listingIndex === -1) {
+      return res.status(404).json({ success: false, error: "Listing not found" });
+    }
+
+    const listing = listings[listingIndex];
+    const isOwner = Boolean(
+      (listing.agentId && requesterId && String(listing.agentId) === String(requesterId)) ||
+      (listing.agentEmail && requesterEmail && String(listing.agentEmail).toLowerCase() === String(requesterEmail).toLowerCase()) ||
+      (!listing.agentId && !listing.agentEmail)
+    );
+
+    if (!isOwner) {
+      const authorizedAgent = listing.agentName || listing.agentEmail || "the specific listing agent";
+      return res.status(403).json({
+        success: false,
+        error: `Permission Denied: Only the specific agent (${authorizedAgent}) can add photos to this property.`
+      });
+    }
+
+    listing.photos = [...(listing.photos || []), ...newPhotos];
+    if (!listing.photoUrl) listing.photoUrl = listing.photos[0];
+    listings[listingIndex] = listing;
+
+    await saveListings(listings);
+
+    res.json({
+      success: true,
+      message: "Photos added successfully by verified agent",
+      photos: listing.photos,
+      photoUrl: listing.photoUrl
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to add photos" });
+  }
+});
+
+// -------------------------------------------------------------
+// DELETE /api/listings/:id: Remove a listing (only by specific agent)
+// -------------------------------------------------------------
+app.delete("/api/listings/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const requesterId = req.headers['x-agent-id'] || req.body?.agentId;
+    const requesterEmail = req.headers['x-agent-email'] || req.body?.agentEmail;
+
+    const listings = await getListings();
+    const listingIndex = listings.findIndex(l => String(l.id) === String(id));
+
+    if (listingIndex === -1) {
+      return res.status(404).json({ success: false, error: "Listing not found" });
+    }
+
+    const listing = listings[listingIndex];
+    const isOwner = Boolean(
+      (listing.agentId && requesterId && String(listing.agentId) === String(requesterId)) ||
+      (listing.agentEmail && requesterEmail && String(listing.agentEmail).toLowerCase() === String(requesterEmail).toLowerCase()) ||
+      (!listing.agentId && !listing.agentEmail)
+    );
+
+    if (!isOwner) {
+      const authorizedAgent = listing.agentName || listing.agentEmail || "the specific listing agent";
+      return res.status(403).json({
+        success: false,
+        error: `Permission Denied: This listing can only be removed by the specific agent (${authorizedAgent}).`
+      });
+    }
+
+    listings.splice(listingIndex, 1);
+    await saveListings(listings);
+
+    res.json({ success: true, message: "Listing removed successfully by verified agent" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to delete listing" });
   }
 });
 

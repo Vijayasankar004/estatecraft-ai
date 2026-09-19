@@ -129,17 +129,184 @@ export default function App() {
 
   // Handle saving a listing from Agent Portal
   const handleSaveListing = async (newListing) => {
-    setInventory((prev) => [newListing, ...prev]);
+    // Ensure agent ownership details are embedded
+    const listingWithAgent = {
+      ...newListing,
+      agentId: newListing.agentId || currentUser?.id || 'usr_agent_001',
+      agentEmail: newListing.agentEmail || currentUser?.email || 'vikram@sothebysrealty.in',
+      agentName: newListing.agentName || currentUser?.name || 'Vikram Malhotra',
+      agency: newListing.agency || currentUser?.agency || "Sotheby's International Realty Mumbai"
+    };
+
+    setInventory((prev) => [listingWithAgent, ...prev]);
 
     // Also attempt to persist to backend /api/listings
     try {
       await fetch('/api/listings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newListing)
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-agent-id': currentUser?.id || 'usr_agent_001',
+          'x-agent-email': currentUser?.email || 'vikram@sothebysrealty.in'
+        },
+        body: JSON.stringify(listingWithAgent)
       });
     } catch (e) {
       // Offline fallback already updated state
+    }
+  };
+
+  // Remove Photo from Stored Listing (Enforces Specific Agent Permission)
+  const handleRemovePhotoFromListing = async (listingId, photoIndexOrUrl) => {
+    const targetListing = inventory.find(item => String(item.id) === String(listingId));
+    if (!targetListing) return { success: false, error: 'Listing not found in inventory' };
+
+    // Check frontend authorization: only the specific agent who owns this listing
+    const isOwner = currentUser && (
+      (targetListing.agentId && currentUser.id === targetListing.agentId) ||
+      (targetListing.agentEmail && currentUser.email?.toLowerCase() === targetListing.agentEmail?.toLowerCase()) ||
+      (!targetListing.agentId && currentUser.role === 'agent')
+    );
+
+    if (!isOwner) {
+      const authorizedAgent = targetListing.agentName || targetListing.agentEmail || 'the specific listing agent';
+      return {
+        success: false,
+        error: `Permission Denied: Photos can only be removed by the specific agent who uploaded this property (${authorizedAgent}).`
+      };
+    }
+
+    // Agent authorized: update local inventory state
+    const updatedInventory = inventory.map(item => {
+      if (String(item.id) === String(listingId)) {
+        const existingPhotos = Array.isArray(item.photos) ? [...item.photos] : [item.photoUrl].filter(Boolean);
+        const newPhotos = typeof photoIndexOrUrl === 'number'
+          ? existingPhotos.filter((_, idx) => idx !== photoIndexOrUrl)
+          : existingPhotos.filter(p => (typeof p === 'string' ? p : p.url) !== photoIndexOrUrl);
+        return {
+          ...item,
+          photos: newPhotos,
+          photoUrl: newPhotos[0] || ''
+        };
+      }
+      return item;
+    });
+
+    setInventory(updatedInventory);
+
+    // Call backend API with agent credentials
+    try {
+      const res = await fetch(`/api/listings/${listingId}/photos/remove`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-agent-id': currentUser.id,
+          'x-agent-email': currentUser.email
+        },
+        body: JSON.stringify({
+          photoIndex: typeof photoIndexOrUrl === 'number' ? photoIndexOrUrl : undefined,
+          photoUrl: typeof photoIndexOrUrl === 'string' ? photoIndexOrUrl : undefined,
+          agentId: currentUser.id,
+          agentEmail: currentUser.email
+        })
+      });
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      return { success: true, message: 'Photo removed from local storage' };
+    }
+  };
+
+  // Add Photos to Stored Listing (Enforces Specific Agent Permission)
+  const handleAddPhotosToListing = async (listingId, newPhotos) => {
+    const targetListing = inventory.find(item => String(item.id) === String(listingId));
+    if (!targetListing) return { success: false, error: 'Listing not found' };
+
+    const isOwner = currentUser && (
+      (targetListing.agentId && currentUser.id === targetListing.agentId) ||
+      (targetListing.agentEmail && currentUser.email?.toLowerCase() === targetListing.agentEmail?.toLowerCase()) ||
+      (!targetListing.agentId && currentUser.role === 'agent')
+    );
+
+    if (!isOwner) {
+      const authorizedAgent = targetListing.agentName || targetListing.agentEmail || 'the specific listing agent';
+      return {
+        success: false,
+        error: `Permission Denied: Only the specific agent (${authorizedAgent}) can add photos to this property.`
+      };
+    }
+
+    const updatedInventory = inventory.map(item => {
+      if (String(item.id) === String(listingId)) {
+        const combined = [...(item.photos || []), ...newPhotos];
+        return {
+          ...item,
+          photos: combined,
+          photoUrl: combined[0] || item.photoUrl
+        };
+      }
+      return item;
+    });
+
+    setInventory(updatedInventory);
+
+    try {
+      const res = await fetch(`/api/listings/${listingId}/photos/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-agent-id': currentUser.id,
+          'x-agent-email': currentUser.email
+        },
+        body: JSON.stringify({
+          photos: newPhotos,
+          agentId: currentUser.id,
+          agentEmail: currentUser.email
+        })
+      });
+      return await res.json();
+    } catch (err) {
+      return { success: true, message: 'Photos added to local storage' };
+    }
+  };
+
+  // Delete Listing from Inventory (Enforces Specific Agent Permission)
+  const handleDeleteListing = async (listingId) => {
+    const targetListing = inventory.find(item => String(item.id) === String(listingId));
+    if (!targetListing) return { success: false, error: 'Listing not found' };
+
+    const isOwner = currentUser && (
+      (targetListing.agentId && currentUser.id === targetListing.agentId) ||
+      (targetListing.agentEmail && currentUser.email?.toLowerCase() === targetListing.agentEmail?.toLowerCase()) ||
+      (!targetListing.agentId && currentUser.role === 'agent')
+    );
+
+    if (!isOwner) {
+      const authorizedAgent = targetListing.agentName || targetListing.agentEmail || 'the specific listing agent';
+      return {
+        success: false,
+        error: `Permission Denied: Only the specific agent (${authorizedAgent}) can delete this listing.`
+      };
+    }
+
+    setInventory(prev => prev.filter(item => String(item.id) !== String(listingId)));
+
+    try {
+      const res = await fetch(`/api/listings/${listingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-agent-id': currentUser.id,
+          'x-agent-email': currentUser.email
+        },
+        body: JSON.stringify({
+          agentId: currentUser.id,
+          agentEmail: currentUser.email
+        })
+      });
+      return await res.json();
+    } catch (err) {
+      return { success: true, message: 'Listing deleted from local storage' };
     }
   };
 
@@ -217,7 +384,11 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {activeTab === 'agent' ? (
           <AgentPortal
+            inventory={inventory}
             onSaveListing={handleSaveListing}
+            onRemovePhotoFromListing={handleRemovePhotoFromListing}
+            onAddPhotosToListing={handleAddPhotosToListing}
+            onDeleteListing={handleDeleteListing}
             existingInventoryCount={inventory.length}
             onSwitchToBuyer={() => setActiveTab('buyer')}
             currentUser={currentUser}

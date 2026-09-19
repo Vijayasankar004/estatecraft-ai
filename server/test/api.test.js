@@ -170,3 +170,85 @@ test('7. Weighted Property Matching (40% Location, 30% Budget, 20% Style, 10% Fe
   // Verify one-line explanation format: "X% Match — This property has..."
   assert.ok(top.matchReason.includes('% Match — This property has'), `One-line explanation format matches specification: ${top.matchReason}`);
 });
+
+test('8. Stored Photos can ONLY be removed by the specific agent who uploaded them', async () => {
+  const propId = `prop_auth_test_${Date.now()}`;
+  const agent1 = {
+    id: 'usr_agent_001',
+    email: 'vikram@sothebysrealty.in',
+    name: 'Vikram Malhotra'
+  };
+  const agent2 = {
+    id: 'usr_agent_unauthorized_999',
+    email: 'intruder@otheragency.in',
+    name: 'Unauthorized Agent'
+  };
+
+  // 1. Agent 1 uploads listing with 3 photos
+  const createRes = await fetch(`${BASE_URL}/api/listings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-agent-id': agent1.id,
+      'x-agent-email': agent1.email
+    },
+    body: JSON.stringify({
+      id: propId,
+      address: '702 Sea View Villa, Bandra West, Mumbai',
+      bedrooms: 4,
+      bathrooms: 4,
+      price: 120000000,
+      agentId: agent1.id,
+      agentEmail: agent1.email,
+      agentName: agent1.name,
+      photos: [
+        'https://images.unsplash.com/photo-101.jpg',
+        'https://images.unsplash.com/photo-102.jpg',
+        'https://images.unsplash.com/photo-103.jpg'
+      ]
+    })
+  });
+  assert.strictEqual(createRes.status, 201);
+  const createData = await createRes.json();
+  assert.strictEqual(createData.data.photos.length, 3);
+
+  // 2. Unauthorized Agent 2 attempts to remove photo from Agent 1's listing -> MUST return 403 Forbidden
+  const unauthorizedRes = await fetch(`${BASE_URL}/api/listings/${propId}/photos/remove`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-agent-id': agent2.id,
+      'x-agent-email': agent2.email
+    },
+    body: JSON.stringify({
+      photoIndex: 1,
+      agentId: agent2.id,
+      agentEmail: agent2.email
+    })
+  });
+  assert.strictEqual(unauthorizedRes.status, 403, 'Unauthorized user must receive 403 Forbidden');
+  const unauthorizedData = await unauthorizedRes.json();
+  assert.strictEqual(unauthorizedData.success, false);
+  assert.ok(unauthorizedData.error.includes('Permission Denied'));
+  assert.ok(unauthorizedData.error.includes(agent1.name), 'Mentions authorized agent name');
+
+  // 3. Authorized Agent 1 removes photo -> MUST return 200 OK
+  const authorizedRes = await fetch(`${BASE_URL}/api/listings/${propId}/photos/remove`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-agent-id': agent1.id,
+      'x-agent-email': agent1.email
+    },
+    body: JSON.stringify({
+      photoIndex: 1,
+      agentId: agent1.id,
+      agentEmail: agent1.email
+    })
+  });
+  assert.strictEqual(authorizedRes.status, 200, 'Authorized agent must receive 200 OK');
+  const authorizedData = await authorizedRes.json();
+  assert.strictEqual(authorizedData.success, true);
+  assert.strictEqual(authorizedData.photos.length, 2, 'Photo was successfully removed');
+});
+
