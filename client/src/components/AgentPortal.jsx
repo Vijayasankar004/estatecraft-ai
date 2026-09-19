@@ -22,7 +22,13 @@ import {
   Flame,
   ShieldCheck,
   Briefcase,
-  User
+  User,
+  Upload,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Layers
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -46,7 +52,7 @@ export default function AgentPortal({
   language = 'en',
   t = (k, f) => f || k
 }) {
-  // Form State
+  // Form State with Multi-Photo Gallery Support
   const [formData, setFormData] = useState({
     propertyId: 'prop-worli-penthouse-1',
     address: 'Worli Sea Face, Worli, Mumbai, Maharashtra 400030',
@@ -56,6 +62,11 @@ export default function AgentPortal({
     price: 185000000,
     propertyType: 'Ultra-Luxury Sea-Facing Penthouse',
     photoUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+    photos: [
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=80'
+    ],
     keyFeatures: [
       "Unobstructed Arabian Sea Views",
       "Private Cantilevered Plunge Pool",
@@ -66,6 +77,9 @@ export default function AgentPortal({
     customNotes: 'South Mumbai prime sea face location with sunset sea vistas and triple-tier security.'
   });
 
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [newUrlInput, setNewUrlInput] = useState('');
   const [customFeatureInput, setCustomFeatureInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDescriptions, setGeneratedDescriptions] = useState(null);
@@ -74,7 +88,7 @@ export default function AgentPortal({
   const [activePresetIndex, setActivePresetIndex] = useState(0);
   const [suggestedVibes, setSuggestedVibes] = useState([]);
 
-  // Auto-classify vibes dynamically whenever features or notes change (Phase 5 Stretch Feature)
+  // Auto-classify vibes dynamically whenever features or notes change
   useEffect(() => {
     const vibes = autoClassifyVibes(formData);
     setSuggestedVibes(vibes);
@@ -83,6 +97,86 @@ export default function AgentPortal({
   // Handle Input Changes
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Handle Multiple File Upload from Device
+  const handleMultipleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setIsUploadingFiles(true);
+    const readers = files.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(readers).then(images => {
+      const validImages = images.filter(Boolean);
+      if (validImages.length > 0) {
+        setFormData(prev => {
+          const updatedPhotos = [...(prev.photos || []), ...validImages];
+          return {
+            ...prev,
+            photos: updatedPhotos,
+            photoUrl: updatedPhotos[0]
+          };
+        });
+      }
+      setIsUploadingFiles(false);
+      e.target.value = '';
+    });
+  };
+
+  // Add Photo via Public URL
+  const handleAddPhotoUrl = (urlToAdd = null) => {
+    const url = (urlToAdd || newUrlInput).trim();
+    if (!url) return;
+
+    setFormData(prev => {
+      const existing = prev.photos || [];
+      if (existing.includes(url)) return prev;
+      const updated = [...existing, url];
+      return {
+        ...prev,
+        photos: updated,
+        photoUrl: prev.photoUrl || url
+      };
+    });
+    setNewUrlInput('');
+  };
+
+  // Remove Photo from gallery
+  const handleRemovePhoto = (indexToRemove) => {
+    setFormData(prev => {
+      const existing = prev.photos || [];
+      const updated = existing.filter((_, idx) => idx !== indexToRemove);
+      return {
+        ...prev,
+        photos: updated,
+        photoUrl: updated[0] || ''
+      };
+    });
+    setActivePhotoIdx(prev => Math.max(0, Math.min(prev, (formData.photos?.length || 1) - 2)));
+  };
+
+  // Set as Cover / Primary Photo
+  const handleSetCoverPhoto = (index) => {
+    setFormData(prev => {
+      const existing = [...(prev.photos || [])];
+      if (index === 0 || !existing[index]) return prev;
+      const selected = existing.splice(index, 1)[0];
+      existing.unshift(selected);
+      return {
+        ...prev,
+        photos: existing,
+        photoUrl: selected
+      };
+    });
+    setActivePhotoIdx(0);
   };
 
   // Toggle Feature Tag
@@ -125,6 +219,8 @@ export default function AgentPortal({
     setActivePresetIndex(nextIdx);
     const preset = SAMPLE_FORM_PRESETS[nextIdx];
 
+    const presetPhotos = preset.photos || [preset.photoUrl];
+
     setFormData({
       propertyId: preset.id || `prop-preset-${nextIdx + 1}`,
       address: preset.address,
@@ -133,11 +229,13 @@ export default function AgentPortal({
       sqft: preset.sqft,
       price: preset.price,
       propertyType: preset.propertyType,
-      photoUrl: preset.photoUrl,
+      photoUrl: presetPhotos[0] || preset.photoUrl,
+      photos: presetPhotos,
       keyFeatures: [...preset.keyFeatures],
       customNotes: preset.customNotes
     });
 
+    setActivePhotoIdx(0);
     setSavedSuccess(false);
   };
 
@@ -183,7 +281,8 @@ export default function AgentPortal({
       sqft: Number(formData.sqft),
       price: Number(formData.price),
       propertyType: formData.propertyType || 'Single Family Home',
-      photoUrl: formData.photoUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+      photoUrl: (formData.photos && formData.photos[0]) || formData.photoUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+      photos: (formData.photos && formData.photos.length > 0) ? formData.photos : [(formData.photoUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80')],
       keyFeatures: formData.keyFeatures,
       customNotes: formData.customNotes,
       vibeTags: suggestedVibes,
@@ -411,74 +510,243 @@ export default function AgentPortal({
                 />
               </div>
 
-              {/* Photo URL & Square Image Preview */}
-              <div className="space-y-2">
+              {/* Multi-Photo Upload & Interactive Media Gallery */}
+              <div className="space-y-3 p-3.5 rounded-2xl dark:bg-slate-900/80 bg-slate-100/90 border dark:border-slate-800 border-slate-200">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider dark:text-slate-300 text-slate-700 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-emerald-500" /> Public Image URL & 1:1 Square Preview
+                  <label className="text-xs font-bold uppercase tracking-wider dark:text-slate-200 text-slate-800 flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-emerald-500" />
+                    Property Photos & Gallery
                   </label>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
-                    MVP Image Engine
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
+                    <Layers className="w-3 h-3" /> {(formData.photos || []).length} Photos
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {formData.photoUrl && (
-                    <div className="w-20 h-20 aspect-square rounded-2xl overflow-hidden border dark:border-slate-800 border-slate-200 shrink-0 relative group shadow-sm">
+                {/* Dual Upload Options: File Input + URL Input */}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* 1. Device Multiple File Upload */}
+                    <div>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        id="agent-multi-photo-upload"
+                        onChange={handleMultipleFileUpload}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="agent-multi-photo-upload"
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition shadow-sm border ${
+                          isUploadingFiles
+                            ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-wait'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 border-emerald-400/40 shadow-emerald-500/15'
+                        }`}
+                      >
+                        {isUploadingFiles ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Reading Photos...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload from Computer</span>
+                          </>
+                        )}
+                      </label>
+                    </div>
+
+                    {/* 2. Add URL Field */}
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="url"
+                        value={newUrlInput}
+                        onChange={(e) => setNewUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddPhotoUrl();
+                          }
+                        }}
+                        placeholder="Paste image URL..."
+                        className="flex-1 dark:bg-slate-950 bg-white dark:border-slate-700 border-slate-300 rounded-xl px-2.5 py-1.5 text-xs dark:text-white text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddPhotoUrl()}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold shrink-0"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Angle Presets */}
+                  <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+                    <span className="text-slate-500 dark:text-slate-400">Quick Angles:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPhotoUrl('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80')}
+                      className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300 transition"
+                    >
+                      + Living Area
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPhotoUrl('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=80')}
+                      className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300 transition"
+                    >
+                      + Kitchen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPhotoUrl('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80')}
+                      className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300 transition"
+                    >
+                      + Master Bedroom
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddPhotoUrl('https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80')}
+                      className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300 transition"
+                    >
+                      + Pool & Sun Deck
+                    </button>
+                  </div>
+                </div>
+
+                {/* Active Photo Main Preview (Square 1:1) */}
+                {formData.photos && formData.photos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="relative w-full aspect-video sm:aspect-square max-h-56 rounded-2xl overflow-hidden border dark:border-slate-800 border-slate-300 bg-slate-950 group shadow-md">
                       <img
-                        src={formData.photoUrl}
-                        alt="Property Preview"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        src={formData.photos[activePhotoIdx] || formData.photos[0]}
+                        alt={`Property photo ${activePhotoIdx + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
                         onError={(e) => {
                           e.target.src = 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80';
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-1">
-                        <span className="text-[9px] text-white font-mono uppercase">1:1 Square</span>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none" />
+
+                      {/* Cover Badge */}
+                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                        {activePhotoIdx === 0 ? (
+                          <span className="px-2 py-0.5 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
+                            <Star className="w-3 h-3 fill-slate-950" /> Cover Photo
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-mono">
+                            Photo {activePhotoIdx + 1} of {formData.photos.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Navigation Arrows on Preview */}
+                      {formData.photos.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setActivePhotoIdx((prev) => (prev > 0 ? prev - 1 : formData.photos.length - 1))}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white backdrop-blur-sm transition"
+                            title="Previous Photo"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActivePhotoIdx((prev) => (prev < formData.photos.length - 1 ? prev + 1 : 0))}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white backdrop-blur-sm transition"
+                            title="Next Photo"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+
+                      {/* Quick Action Bar on Preview */}
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                        {activePhotoIdx !== 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => handleSetCoverPhoto(activePhotoIdx)}
+                            className="px-2.5 py-1 rounded-lg bg-amber-500/90 hover:bg-amber-400 text-slate-950 text-[11px] font-bold transition flex items-center gap-1 shadow"
+                          >
+                            <Star className="w-3 h-3" /> Make Cover Photo
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-amber-300 font-medium px-2 py-0.5 rounded bg-slate-950/70">
+                            ★ Active primary listing image
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePhoto(activePhotoIdx)}
+                          className="px-2.5 py-1 rounded-lg bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-semibold transition flex items-center gap-1 shadow"
+                        >
+                          <Trash2 className="w-3 h-3" /> Remove
+                        </button>
                       </div>
                     </div>
-                  )}
-                  <div className="flex-1 space-y-1.5">
-                    <input
-                      type="url"
-                      value={formData.photoUrl}
-                      onChange={(e) => handleInputChange('photoUrl', e.target.value)}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      className="w-full dark:bg-slate-900/90 bg-white dark:border-slate-700/70 border-slate-300 rounded-xl px-3.5 py-2 text-xs dark:text-white text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
-                    />
-                    {/* Quick photo presets */}
-                    <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
-                      <span className="text-slate-500 dark:text-slate-400">Quick URL:</span>
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('photoUrl', 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80')}
-                        className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300"
+
+                    {/* Horizontal Thumbnail Strip */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                      {formData.photos.map((photo, index) => {
+                        const isSelected = activePhotoIdx === index;
+                        const isCover = index === 0;
+
+                        return (
+                          <div
+                            key={index}
+                            onClick={() => setActivePhotoIdx(index)}
+                            className={`relative w-14 h-14 shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 transition-all group ${
+                              isSelected
+                                ? 'border-emerald-500 scale-105 shadow-md ring-2 ring-emerald-500/30'
+                                : 'border-slate-300 dark:border-slate-700 opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <img
+                              src={photo}
+                              alt={`Thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.src = 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80';
+                              }}
+                            />
+                            {isCover && (
+                              <div className="absolute top-0.5 left-0.5 bg-amber-500 text-slate-950 p-0.5 rounded text-[8px] font-bold">
+                                ★
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemovePhoto(index);
+                              }}
+                              className="absolute top-0.5 right-0.5 p-0.5 rounded bg-slate-950/80 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition"
+                              title="Delete photo"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      {/* Add more photo button in strip */}
+                      <label
+                        htmlFor="agent-multi-photo-upload"
+                        className="w-14 h-14 shrink-0 rounded-xl border-2 border-dashed border-slate-400 dark:border-slate-700 hover:border-emerald-500 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-emerald-500 transition"
+                        title="Upload more photos"
                       >
-                        Luxury Penthouse
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('photoUrl', 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80')}
-                        className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300"
-                      >
-                        Garden Villa
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('photoUrl', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80')}
-                        className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-emerald-500/20 text-slate-700 dark:text-slate-300"
-                      >
-                        Minimalist Home
-                      </button>
+                        <Plus className="w-4 h-4" />
+                        <span className="text-[8px] font-semibold">+ More</span>
+                      </label>
                     </div>
                   </div>
-                </div>
-
-                {/* MVP Future enhancement badge */}
-                <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300 flex items-center justify-between">
-                  <span>💡 <strong>MVP Simplification:</strong> Direct Public Image URL input.</span>
-                  <span className="text-[10px] font-mono opacity-80">Local file upload is a future enhancement</span>
-                </div>
+                )}
               </div>
 
               {/* Key Features (Tags + Custom Text) */}

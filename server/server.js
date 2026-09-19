@@ -18,7 +18,8 @@ const PORT = process.env.PORT || 5000;
 
 // Enable JSON body parsing and CORS
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Helper function: Format currency in Indian Rupees (Crores & Lakhs)
 const formatCurrency = (amount) => {
@@ -342,7 +343,49 @@ CRITICAL REQUIREMENT: Keep every single description strictly under 80 to 100 wor
           }
         }
       } catch (err) {
-        console.warn("OpenAI call failed, falling back to local mock mode:", err.message);
+        console.warn("OpenAI call failed, checking Gemini or falling back:", err.message);
+      }
+    }
+
+    // Live Gemini AI Integration (if GEMINI_API_KEY present and free from Google AI Studio)
+    if (!generated && process.env.GEMINI_API_KEY) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+        const geminiPrompt = `You are an expert real estate copywriter. Output ONLY a valid JSON object with keys "luxury", "cozy", "minimalist", and "instagram". Prices are in INR (${formattedPrice}).
+CRITICAL REQUIREMENT: Keep every single description strictly under 80 to 100 words. High impact, elegant, and concise.
+- luxury: Sophisticated, architectural prestige, bespoke finishes, grand scale. (60-85 words)
+- cozy: Emotional, warm, family-oriented, peaceful neighborhood focus. (60-85 words)
+- minimalist: Clean modern design focused on simplicity, functional flow, natural light, and uncluttered elegance. (60-85 words)
+- instagram: Punchy hook, bullet points, emojis, call-to-action and hashtags. (under 80 words)
+
+Property: ${address}, ${bedrooms} beds, ${bathrooms} baths, ${sqft} sqft, Price: ${formattedPrice}, Type: ${typeStr}. Features: ${featureList}.`;
+
+        const geminiRes = await fetch(geminiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: geminiPrompt }] }],
+            generationConfig: { response_mime_type: "application/json" }
+          })
+        });
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const parsed = JSON.parse(text);
+            if (parsed.luxury && parsed.cozy) {
+              generated = {
+                luxury: parsed.luxury,
+                cozy: parsed.cozy,
+                minimalist: parsed.minimalist || `Clean modern design focused on simplicity, natural light, and effortless flow. Featuring ${primaryFeature.toLowerCase()} and crisp architectural lines, this ${bedrooms}-bedroom home removes clutter to highlight functional elegance. Offered at ${formattedPrice}.`,
+                instagram: parsed.instagram || `🔥 JUST LISTED: ${typeStr} in ${address.split(',')[0]}! ✨ ${bedrooms} Bed / ${bathrooms} Bath showstopper. 💎 Offered at ${formattedPrice}. DM "TOUR" for floorplans!`
+              };
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Gemini call failed, falling back to local mock mode:", err.message);
       }
     }
 
@@ -370,7 +413,7 @@ CRITICAL REQUIREMENT: Keep every single description strictly under 80 to 100 wor
 
     return res.json({ 
       success: true, 
-      source: process.env.OPENAI_API_KEY && generated ? "OpenAI Live" : "Local Mock Mode", 
+      source: process.env.OPENAI_API_KEY && generated ? "OpenAI Live" : process.env.GEMINI_API_KEY && generated ? "Gemini Live" : "Local Mock Mode", 
       cached: false, 
       propertyId: propKey,
       descriptions: generated 

@@ -15,7 +15,10 @@ import {
   ArrowRight,
   TrendingUp,
   Tag,
-  DollarSign
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+  Camera
 } from 'lucide-react';
 
 const Instagram = ({ className = "w-4 h-4" }) => (
@@ -50,6 +53,34 @@ export default function BuyerPortal({
   const [activeToneOnCard, setActiveToneOnCard] = useState({});
   const [selectedPropertyModal, setSelectedPropertyModal] = useState(null);
   const [tourScheduled, setTourScheduled] = useState(false);
+  const [activePhotoIndexMap, setActivePhotoIndexMap] = useState({});
+  const [modalPhotoIndex, setModalPhotoIndex] = useState(0);
+
+  const getPropertyPhotos = (property) => {
+    if (Array.isArray(property?.photos) && property.photos.length > 0) {
+      return property.photos;
+    }
+    if (property?.photoUrl) {
+      return [property.photoUrl];
+    }
+    return ['https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80'];
+  };
+
+  const handlePrevPhoto = (e, propId, total) => {
+    e.stopPropagation();
+    setActivePhotoIndexMap(prev => ({
+      ...prev,
+      [propId]: ((prev[propId] || 0) - 1 + total) % total
+    }));
+  };
+
+  const handleNextPhoto = (e, propId, total) => {
+    e.stopPropagation();
+    setActivePhotoIndexMap(prev => ({
+      ...prev,
+      [propId]: ((prev[propId] || 0) + 1) % total
+    }));
+  };
 
   // Initialize with the first quick chip on mount
   useEffect(() => {
@@ -206,41 +237,91 @@ export default function BuyerPortal({
               <div className="grid grid-cols-1 lg:grid-cols-12">
                 
                 {/* Photo & Badge Breakdown (4 Cols) */}
-                <div className="lg:col-span-4 relative h-64 lg:h-auto min-h-[280px] overflow-hidden bg-slate-900">
-                  <img
-                    src={property.photoUrl || property.photos?.[0] || 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80'}
-                    alt={property.address}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
-                  
-                  {/* Rank Badge */}
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/10 text-xs font-bold font-mono text-white flex items-center gap-1">
-                    <span>#{rank + 1}</span>
-                    <span className="opacity-70">Ranked Match</span>
-                  </div>
+                {(() => {
+                  const photos = getPropertyPhotos(property);
+                  const currentPhotoIdx = (activePhotoIndexMap[property.id] || 0) % photos.length;
+                  const currentPhoto = photos[currentPhotoIdx];
 
-                  {/* Badge Breakdown: Price, beds/baths, sqft */}
-                  <div className="absolute bottom-4 left-4 right-4 space-y-2">
-                    <span className="text-2xl font-extrabold text-white font-mono drop-shadow-lg block">
-                      {formatCurrency(property.price)}
-                    </span>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200 font-medium">
-                      <span className="px-2 py-0.5 rounded bg-slate-950/80 border border-white/10 flex items-center gap-1">
-                        <Bed className="w-3 h-3 text-indigo-400" /> {property.bedrooms} Beds
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-slate-950/80 border border-white/10 flex items-center gap-1">
-                        <Bath className="w-3 h-3 text-indigo-400" /> {property.bathrooms} Baths
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-slate-950/80 border border-white/10 flex items-center gap-1">
-                        <Maximize2 className="w-3 h-3 text-indigo-400" /> {formatNumber(property.sqft)} sqft
-                      </span>
+                  return (
+                    <div className="lg:col-span-4 relative h-64 lg:h-auto min-h-[280px] overflow-hidden bg-slate-900 group/img">
+                      <img
+                        src={currentPhoto}
+                        alt={property.address}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent pointer-events-none" />
+                      
+                      {/* Rank Badge */}
+                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/10 text-xs font-bold font-mono text-white flex items-center gap-1 z-10">
+                        <span>#{rank + 1}</span>
+                        <span className="opacity-70">Ranked Match</span>
+                      </div>
+
+                      {/* Multi-photo pill if multiple photos */}
+                      {photos.length > 1 && (
+                        <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-white/10 text-[11px] font-bold font-mono text-white flex items-center gap-1.5 z-10 shadow-lg">
+                          <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>{currentPhotoIdx + 1}/{photos.length}</span>
+                        </div>
+                      )}
+
+                      {/* Multi-photo Prev / Next navigation arrows */}
+                      {photos.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => handlePrevPhoto(e, property.id, photos.length)}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950/75 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-sm border border-white/20 opacity-90 sm:opacity-0 sm:group-hover/img:opacity-100 transition-all z-20 shadow-md hover:scale-110"
+                            title="Previous photo"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleNextPhoto(e, property.id, photos.length)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950/75 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-sm border border-white/20 opacity-90 sm:opacity-0 sm:group-hover/img:opacity-100 transition-all z-20 shadow-md hover:scale-110"
+                            title="Next photo"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+
+                          {/* Navigation Indicator Dots */}
+                          <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none">
+                            {photos.map((_, dotIdx) => (
+                              <span
+                                key={dotIdx}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${
+                                  dotIdx === currentPhotoIdx ? 'w-4 bg-white shadow-sm' : 'w-1.5 bg-white/40'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Badge Breakdown: Price, beds/baths, sqft */}
+                      <div className="absolute bottom-4 left-4 right-4 space-y-2 z-10">
+                        <span className="text-2xl font-extrabold text-white font-mono drop-shadow-lg block">
+                          {formatCurrency(property.price)}
+                        </span>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200 font-medium">
+                          <span className="px-2 py-0.5 rounded bg-slate-950/80 border border-white/10 flex items-center gap-1">
+                            <Bed className="w-3 h-3 text-indigo-400" /> {property.bedrooms} Beds
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-slate-950/80 border border-white/10 flex items-center gap-1">
+                            <Bath className="w-3 h-3 text-indigo-400" /> {property.bathrooms} Baths
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-slate-950/80 border border-white/10 flex items-center gap-1">
+                            <Maximize2 className="w-3 h-3 text-indigo-400" /> {formatNumber(property.sqft)} sqft
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Main Content & Reasoning (8 Cols) */}
                 <div className="lg:col-span-8 p-6 flex flex-col justify-between space-y-6">
@@ -470,7 +551,10 @@ export default function BuyerPortal({
 
                     <button
                       type="button"
-                      onClick={() => setSelectedPropertyModal(property)}
+                      onClick={() => {
+                        setSelectedPropertyModal(property);
+                        setModalPhotoIndex(0);
+                      }}
                       className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-lg shadow-indigo-500/20 w-full sm:w-auto"
                     >
                       <span>{t('requestTour', 'Schedule Tour')}</span>
@@ -510,12 +594,76 @@ export default function BuyerPortal({
               <p className="text-xs text-slate-500 dark:text-slate-300">
                 You are requesting a private walk-through for:
               </p>
-              <div className="p-3.5 rounded-2xl dark:bg-slate-950 bg-slate-50 border dark:border-slate-800 border-slate-200">
-                <div className="font-bold text-sm dark:text-white text-slate-900">{selectedPropertyModal.address}</div>
-                <div className="text-xs text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
-                  {formatCurrency(selectedPropertyModal.price)} • {selectedPropertyModal.bedrooms} Beds • {selectedPropertyModal.bathrooms} Baths
-                </div>
-              </div>
+              
+              {/* Multi-Photo Carousel in Modal */}
+              {(() => {
+                const modalPhotos = getPropertyPhotos(selectedPropertyModal);
+                const activePhoto = modalPhotos[modalPhotoIndex] || modalPhotos[0];
+
+                return (
+                  <div className="rounded-2xl overflow-hidden border dark:border-slate-800 border-slate-200 bg-slate-950">
+                    <div className="relative h-44 sm:h-48 w-full overflow-hidden">
+                      <img
+                        src={activePhoto}
+                        alt={selectedPropertyModal.address}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none" />
+
+                      {modalPhotos.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setModalPhotoIndex((prev) => (prev - 1 + modalPhotos.length) % modalPhotos.length)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-950/80 hover:bg-slate-950 text-white flex items-center justify-center border border-white/20 transition shadow"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setModalPhotoIndex((prev) => (prev + 1) % modalPhotos.length)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-950/80 hover:bg-slate-950 text-white flex items-center justify-center border border-white/20 transition shadow"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-slate-950/80 text-white text-[10px] font-mono border border-white/20 flex items-center gap-1">
+                            <Camera className="w-3 h-3 text-indigo-400" />
+                            <span>{modalPhotoIndex + 1} / {modalPhotos.length}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Thumbnail Strip */}
+                    {modalPhotos.length > 1 && (
+                      <div className="flex gap-1.5 p-2 bg-slate-900/90 overflow-x-auto border-t border-slate-800 scrollbar-thin">
+                        {modalPhotos.map((pUrl, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setModalPhotoIndex(idx)}
+                            className={`relative w-12 h-9 rounded-lg overflow-hidden shrink-0 border-2 transition ${
+                              modalPhotoIndex === idx ? 'border-indigo-500 scale-105 ring-2 ring-indigo-500/40' : 'border-transparent opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={pUrl} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="p-3 bg-slate-50 dark:bg-slate-950/90 border-t dark:border-slate-800 border-slate-200">
+                      <div className="font-bold text-sm dark:text-white text-slate-900">{selectedPropertyModal.address}</div>
+                      <div className="text-xs text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                        {formatCurrency(selectedPropertyModal.price)} • {selectedPropertyModal.bedrooms} Beds • {selectedPropertyModal.bathrooms} Baths
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Client Profile Identification */}
               {currentUser ? (

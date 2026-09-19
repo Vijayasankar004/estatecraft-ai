@@ -131,5 +131,27 @@
     "reraNumber": "RERA/MH/2026/0999",
     "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
     "createdAt": "2026-09-19T10:20:29.329Z"
+  },
+  {
+    "id": "usr_agent_1789813719722",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789813719717@test.com",
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T10:28:39.722Z"
+  },
+  {
+    "id": "usr_agent_1789816277567",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789816277563@test.com",
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T11:11:17.567Z"
   }
 ]
