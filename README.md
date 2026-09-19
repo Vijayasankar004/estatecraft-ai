@@ -1,10 +1,11 @@
 # 🏛️ EstateCraft AI — Real Estate Listing Description & Conversational Match Engine
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/)
-[![Tests](https://img.shields.io/badge/tests-5%20passed-success.svg)](https://github.com/)
+[![Tests](https://img.shields.io/badge/tests-8%20passed-success.svg)](https://github.com/)
 [![Currency](https://img.shields.io/badge/currency-INR%20(%E2%82%B9%20Crores%20%26%20Lakhs)-blue.svg)](https://github.com/)
 [![Full Stack](https://img.shields.io/badge/stack-React%20%2B%20Express%20%2B%20Tailwind-purple.svg)](https://github.com/)
 [![Theme](https://img.shields.io/badge/theme-Dark%20%26%20Light%20Mode-orange.svg)](https://github.com/)
+[![Security](https://img.shields.io/badge/auth-Agent--Only%20Photo%20Control-indigo.svg)](https://github.com/)
 
 > A full-stack, two-sided AI real estate platform that transforms property specs into multi-tone copywriting for agents and bridges conversational buyer intent with transparent, explainable match reasoning.
 
@@ -14,15 +15,15 @@
 - [🎯 Executive Summary](#-executive-summary)
 - [🏗️ System Architecture](#️-system-architecture)
 - [✨ Core Capabilities](#-core-capabilities)
-  - [1. Agent Studio (Multi-Tone Copywriting)](#1-agent-studio-multi-tone-copywriting)
-  - [2. Conversational Buyer Matchmaker](#2-conversational-buyer-matchmaker)
-  - [3. User & Agent Account System](#3-user--agent-account-system)
-  - [4. Profile Picture Upload & Customization](#4-profile-picture-upload--customization)
+  - [1. Agent Studio (Multi-Tone Copywriting & Photo Management)](#1-agent-studio-multi-tone-copywriting--photo-management)
+  - [2. Stored Photo Persistence & Agent-Only Removal](#2-stored-photo-persistence--agent-only-removal)
+  - [3. Conversational Buyer Matchmaker (Fair Weighted Scoring)](#3-conversational-buyer-matchmaker-fair-weighted-scoring)
+  - [4. User & Agent Account System](#4-user--agent-account-system)
   - [5. Dual Theme Support (Dark & Light)](#5-dual-theme-support-dark--light)
   - [6. Indian Currency (INR / ₹) System](#6-indian-currency-inr---system)
-- [📊 10 Curated Indian Sample Datasets](#-10-curated-indian-sample-datasets)
+- [📊 Curated Indian Sample Datasets](#-curated-indian-sample-datasets)
 - [📡 REST API Documentation](#-rest-api-documentation)
-- [🛡️ Zero-Crash Resilience (Hackathon Safe Mode)](#️-zero-crash-resilience-hackathon-safe-mode)
+- [🛡️ High-Reliability Architecture](#️-high-reliability-architecture)
 - [🚀 Quick Start & Installation](#-quick-start--installation)
 - [🧪 Automated Testing](#-automated-testing)
 
@@ -183,12 +184,15 @@ Run the automated test suite with Node's native test runner:
 npm test
 ```
 
-### Test Coverage Results:
+### Test Coverage Results (All 8 Tests Passing):
 ```
 ✔ 1. Health Check Endpoint returns online status and INR currency
 ✔ 2. Listings Endpoint returns curated Indian real estate listings
 ✔ 3. Generate 3-Tone Listing Descriptions (Luxury, Cozy, Instagram)
 ✔ 4. Conversational Buyer Semantic Matching with Reasoning
 ✔ 5. User Authentication & Profile Picture Support
-ℹ tests 5 | pass 5 | fail 0
+✔ 6. Caching of Descriptions using propertyId + tone and < 100 word limits
+✔ 7. Weighted Property Matching (40% Location, 30% Budget, 20% Style, 10% Features)
+✔ 8. Stored Photos can ONLY be removed by the specific agent who uploaded them
+ℹ tests 8 | pass 8 | fail 0
 ```
