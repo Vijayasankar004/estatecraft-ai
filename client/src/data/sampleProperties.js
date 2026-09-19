@@ -1,0 +1,424 @@
+export const SAMPLE_FORM_PRESETS = [
+  {
+    id: 'preset-1',
+    title: 'The Horizon Bay Glass Penthouse',
+    address: 'Worli Sea Face, Worli, Mumbai, Maharashtra 400030',
+    bedrooms: 5,
+    bathrooms: 6,
+    sqft: 5800,
+    price: 185000000,
+    propertyType: 'Ultra-Luxury Sea-Facing Penthouse',
+    photoUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+    keyFeatures: [
+      "Unobstructed Arabian Sea Views",
+      "Private Cantilevered Plunge Pool",
+      "Italian Calacatta Marble Flooring",
+      "Direct Key-Card High-Speed Elevator",
+      "Gourmet German Poggenpohl Kitchen",
+      "Automated Smart Home Automation"
+    ],
+    customNotes: "South Mumbai prime sea face location with sunset sea vistas and triple-tier security."
+  },
+  {
+    id: 'preset-2',
+    title: 'The Emerald Grove Contemporary Tech Villa',
+    address: '3rd Block, Koramangala, Bengaluru, Karnataka 560034',
+    bedrooms: 4,
+    bathrooms: 4.5,
+    sqft: 4200,
+    price: 78000000,
+    propertyType: 'Contemporary Independent Villa',
+    photoUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+    keyFeatures: [
+      "Private Heated Swimming Pool",
+      "Landscaped Zen Courtyard & Koi Pond",
+      "Solar Power & Tesla Fast Charger",
+      "Designer Home Theatre Suite",
+      "Walkable to 80ft Road Cafes & Restaurants"
+    ],
+    customNotes: "Located in Koramangala's prestigious billionaire's boulevard with lush canopy trees."
+  },
+  {
+    id: 'preset-3',
+    title: 'Villa Sol do Oriente',
+    address: 'Badem Road, Assagao, Goa 403507',
+    bedrooms: 4,
+    bathrooms: 4.5,
+    sqft: 4100,
+    price: 68000000,
+    propertyType: 'Portuguese Heritage Villa',
+    photoUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80',
+    keyFeatures: [
+      "Restored 19th Century Indo-Portuguese Facade",
+      "Private Lagoon Swimming Pool & Sun Deck",
+      "Traditional Courtyard with Frangipani Trees",
+      "High Vaulted Ceilings & Oyster Shell Windows",
+      "10 Mins to Vagator & Anjuna Beaches"
+    ],
+    customNotes: "Quiet Assagao location near Gunpowder and bespoke designer boutiques."
+  }
+];
+
+export const INITIAL_PUBLIC_INVENTORY = [
+  {
+    id: "prop_001",
+    address: "Worli Sea Face, Worli, Mumbai, Maharashtra 400030",
+    title: "The Horizon Bay Glass Penthouse",
+    bedrooms: 5,
+    bathrooms: 6,
+    sqft: 5800,
+    price: 185000000,
+    propertyType: "Ultra-Luxury Sea-Facing Penthouse",
+    features: [
+      "Unobstructed Arabian Sea Views",
+      "Private Cantilevered Plunge Pool",
+      "Italian Calacatta Marble Flooring",
+      "Direct Key-Card High-Speed Elevator",
+      "Gourmet German Poggenpohl Kitchen",
+      "Automated Smart Home Automation"
+    ],
+    keyFeatures: [
+      "Unobstructed Arabian Sea Views",
+      "Private Cantilevered Plunge Pool",
+      "Italian Calacatta Marble Flooring",
+      "Direct Key-Card High-Speed Elevator",
+      "Gourmet German Poggenpohl Kitchen"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "South Mumbai prime sea face location with sunset sea vistas and triple-tier security.",
+    vibeTags: ["#SeaFacingLuxury", "#WorliSkyline", "#MumbaiHighLife", "#PenthousePrestige"],
+    descriptions: {
+      luxury: "Commanding an exalted sea-facing vantage along Mumbai's storied Worli Sea Face, this bespoke sky mansion spans 5,800 square feet of curated architectural perfection. Italian Calacatta marble expanses and 13-foot floor-to-ceiling glass dissolve boundaries between ultra-luxury interiors and the Arabian Sea horizon. Host in grand salon scale with a Poggenpohl culinary suite, private sommelier room, and an ethereal cantilevered plunge pool framing the Mumbai coastal skyline.",
+      cozy: "Wake up each morning to the gentle sea breeze and sparkling waters of the Arabian Sea. This warm, luminous penthouse is designed for effortless family comfort, featuring a sun-drenched breakfast room, peaceful bedroom sanctuaries, and sunset balconies where loved ones gather after a busy city day. Located in safe, prestigious South Mumbai near premier schools and seaside promenades.",
+      instagram: "🌊 SOUTH MUMBAI SEA-FACING PENTHOUSE GOALS! 💎🌅\n\nLive above the clouds on iconic Worli Sea Face!\n\n✨ 5 Bed | 6 Bath | 5,800 SQ FT\n🏊 Private heated infinity plunge pool facing the ocean\n🏛️ Direct key-card elevator opening to your private foyer\n🍽️ German Poggenpohl kitchen fit for Michelin masterchefs\n\nSave this for your Mumbai dream board! 📌\nDM @EstateCraft for VIP showings 🥂\n\n#MumbaiRealEstate #WorliSeaFace #LuxuryLiving #SeaViewHome #EstateCraftAI #IndianLuxuryHomes"
+    }
+  },
+  {
+    id: "prop_002",
+    address: "3rd Block, Koramangala, Bengaluru, Karnataka 560034",
+    title: "The Emerald Grove Contemporary Tech Villa",
+    bedrooms: 4,
+    bathrooms: 4.5,
+    sqft: 4200,
+    price: 78000000,
+    propertyType: "Contemporary Independent Villa",
+    features: [
+      "Private Heated Swimming Pool",
+      "Landscaped Zen Courtyard & Koi Pond",
+      "Solar Power & Tesla Fast Charger",
+      "Designer Home Theatre Suite",
+      "Walkable to 80ft Road Cafes & Restaurants"
+    ],
+    keyFeatures: [
+      "Private Heated Swimming Pool",
+      "Landscaped Zen Courtyard & Koi Pond",
+      "Solar Power & Tesla Fast Charger",
+      "Designer Home Theatre Suite"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Located in Koramangala's prestigious billionaire's boulevard with lush canopy trees.",
+    vibeTags: ["#KoramangalaVilla", "#TechHubLuxury", "#PrivatePool", "#BengaluruLiving"],
+    descriptions: {
+      luxury: "An architectural tour de force in Bengaluru's most sought-after billionaire enclave. This bespoke 4,200 sq ft villa seamlessly blends raw basalt stone, teakwood louvers, and sustainable solar technology. Featuring a heated turquoise pool, sunken living pavilion, and executive study, this residence defines contemporary luxury in India's Silicon Valley.",
+      cozy: "Tucked away in the quiet, verdant lanes of Koramangala 3rd Block. This peaceful family home is centered around a sunlit courtyard garden with a whispering koi pond. Enjoy relaxed Sunday brunches by the pool and strolls to Bengaluru's best artisanal bakeries, all within a safe, gated neighborhood community.",
+      instagram: "🌴 BENGALURU DREAM VILLA IN KORAMANGALA! 🚀✨\n\nThe ultimate tech-founder paradise has arrived!\n\n🏊 Private heated pool & koi courtyard\n☀️ 100% solar powered with EV fast charging\n🍿 Acoustic private home theatre for weekend movies\n☕ 3-min walk to top 80ft Road cafes & roasteries\n\nTag someone who wants this Bengaluru home! 👇\nDM for private walk-through slots 📲\n\n#BangaloreRealEstate #Koramangala #LuxuryVilla #TechLife #BengaluruLiving #EstateCraftAI"
+    }
+  },
+  {
+    id: "prop_003",
+    address: "Golf Course Road, DLF Phase 5, Gurugram, Haryana 122002",
+    title: "The Magnolias Golf Vista Suite",
+    bedrooms: 4,
+    bathrooms: 5,
+    sqft: 4900,
+    price: 92000000,
+    propertyType: "Golf Course Facing Sky Mansion",
+    features: [
+      "18-Hole Championship Golf Course Views",
+      "Private Elevator Foyer",
+      "Double-Height 22ft Ceiling Living Room",
+      "Clubhouse with Olympic Heated Pool",
+      "Concierge & 5-Tier Gated Security"
+    ],
+    keyFeatures: [
+      "18-Hole Championship Golf Course Views",
+      "Private Elevator Foyer",
+      "Double-Height 22ft Ceiling Living Room",
+      "Clubhouse with Olympic Heated Pool"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Unobstructed fairway views, private access to DLF Golf & Country Club.",
+    vibeTags: ["#GolfCourseViews", "#GurugramPenthouse", "#DLFPhase5", "#UltraLuxuryNCR"],
+    descriptions: {
+      luxury: "Elevating modern NCR prestige, this 4,900 sq ft residence commands frontline fairway vistas over DLF's Arnold Palmer championship golf course. Soaring 22-foot double-height living spaces, imported Greek Thassos marble, and a five-star concierge club ecosystem offer unmatched exclusivity on Golf Course Road.",
+      cozy: "A tranquil family haven high above Gurugram's bustling skyline. Enjoy calm morning cups of tea on your expansive balcony watching the sun rise over the manicured green fairways. Complete with secure community grounds, Olympic swimming facilities, and top international schools nearby.",
+      instagram: "⛳ GOLF COURSE ROAD ULTRA-LUXURY IN GURUGRAM! 🏙️✨\n\nLiving directly over an 18-hole championship golf course!\n\n💎 4 Bed | 5 Bath | 4,900 SQ FT\n🏌️ Frontline fairway views that never get old\n🏊 Olympic heated pool & 5-star private clubhouse\n🛡️ 5-tier gated security for complete peace of mind\n\nWould you move here? Drop a '🔥' below!\nDM @EstateCraft for private showings 🗝️\n\n#GurugramRealEstate #DLFPhase5 #GolfCourseRoad #LuxuryHomesIndia #EstateCraftAI"
+    }
+  },
+  {
+    id: "prop_004",
+    address: "Road No. 36, Jubilee Hills, Hyderabad, Telangana 500033",
+    title: "The Nizami Modern Palace",
+    bedrooms: 5,
+    bathrooms: 6,
+    sqft: 7200,
+    price: 140000000,
+    propertyType: "Modern Architectural Mansion",
+    features: [
+      "Private Manicured Lawn & Gazebo",
+      "Travertine Stone Cladding & Waterfalls",
+      "Sommelier Wine Tasting Cellar",
+      "Covered 6-Car Underground Parking",
+      "Proximity to KBR National Park"
+    ],
+    keyFeatures: [
+      "Private Manicured Lawn & Gazebo",
+      "Travertine Stone Cladding & Waterfalls",
+      "Sommelier Wine Tasting Cellar",
+      "Covered 6-Car Underground Parking"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Prime Jubilee Hills elevated plot overlooking KBR Park canopy and city lights.",
+    vibeTags: ["#JubileeHills", "#HyderabadMansion", "#GrandScale", "#ArchitecturalMasterpiece"],
+    descriptions: {
+      luxury: "A synthesis of royal Nizami hospitality and modernist European architecture in prime Jubilee Hills. Across 7,200 sq ft, travertine stone volumes open onto private rolling lawns, indoor water features, and an executive grand salon, delivering peerless distinction in Hyderabad's premier zip code.",
+      cozy: "A warm, joyful family sanctuary where generations gather comfortably. The private garden lawn and sunlit verandas provide endless room for children's games, festive gatherings, and quiet evening breezes from nearby KBR Park.",
+      instagram: "🏰 JUBILEE HILLS PALATIAL MANSION! 👑✨\n\n7,200 SQ FT of architectural majesty in Hyderabad's most exclusive address!\n\n🌿 Private manicured gardens & reflection ponds\n🚗 6-car executive underground motor court\n🍷 Private climate-controlled cellar & tasting lounge\n\nSave this for your dream home vision board! 📌\nDM 'TOUR' to request VIP access 📲\n\n#HyderabadRealEstate #JubileeHills #ModernPalace #LuxuryLivingIndia #EstateCraft"
+    }
+  },
+  {
+    id: "prop_005",
+    address: "Boat Club Road, R.A. Puram, Chennai, Tamil Nadu 600028",
+    title: "The Adyar Colonial Heritage Bungalow",
+    bedrooms: 4,
+    bathrooms: 4,
+    sqft: 3800,
+    price: 115000000,
+    propertyType: "Colonial Heritage Bungalow",
+    features: [
+      "Original Burma Teakwood Rafters",
+      "Athangudi Handcrafted Tile Flooring",
+      "Deep Wraparound Verandas & Porch",
+      "Canopy of 100-Year-Old Banyan Trees",
+      "Exclusive Ultra-VIP Enclave"
+    ],
+    keyFeatures: [
+      "Original Burma Teakwood Rafters",
+      "Athangudi Handcrafted Tile Flooring",
+      "Deep Wraparound Verandas & Porch",
+      "Canopy of 100-Year-Old Banyan Trees"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Boat Club Road is Chennai's most exclusive address with serene tree-lined boulevards.",
+    vibeTags: ["#BoatClubRoad", "#ChennaiHeritage", "#BurmaTeak", "#BungalowLiving"],
+    descriptions: {
+      luxury: "Preserved architectural heritage along Chennai's most coveted Boat Club boulevard. Featuring hand-planed Burma teak rafters, artisan Athangudi courtyard tiles, and sprawling shaded colonnades beneath centenarian banyan canopies, this estate represents generational prestige.",
+      cozy: "A timeless family bungalow filled with soul, nostalgic breezes, and gentle bird songs. The rocking-chair verandah is made for morning filter coffee, while the spacious garden provides a serene sanctuary in the heart of Chennai.",
+      instagram: "🏛️ TIMELESS CHENNAI HERITAGE ON BOAT CLUB ROAD! 🌿☕\n\nRarely does a home on India's most exclusive avenue become available!\n\n🪵 Authentic Burma teakwood & Athangudi artisan tiles\n🌳 Shaded by 100-year-old historic banyan trees\n☕ Sprawling verandahs built for morning filter coffee\n\nTag someone who loves heritage homes! 🤍\nDM for off-market buyer inquiries 🗝️\n\n#ChennaiRealEstate #BoatClubRoad #HeritageBungalow #ClassicArchitecture #EstateCraftAI"
+    }
+  },
+  {
+    id: "prop_006",
+    address: "12th Main, Indiranagar, Bengaluru, Karnataka 560038",
+    title: "The Scandinavian Rooftop Sky Loft",
+    bedrooms: 3,
+    bathrooms: 3,
+    sqft: 2400,
+    price: 34000000,
+    propertyType: "Minimalist Penthouse Loft",
+    features: [
+      "Exposed Industrial Brick & Pine Wood",
+      "Private 700 sqft Rooftop Herb Garden",
+      "Floor-to-Ceiling Skylights",
+      "Walkable to Metro & Indie Breweries",
+      "Dedicated Acoustic Soundproof Studio"
+    ],
+    keyFeatures: [
+      "Exposed Industrial Brick & Pine Wood",
+      "Private 700 sqft Rooftop Herb Garden",
+      "Floor-to-Ceiling Skylights",
+      "Walkable to Metro & Indie Breweries"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Steps from 100ft road cafes and metro station, peaceful residential lane.",
+    vibeTags: ["#IndiranagarLoft", "#RooftopGarden", "#UrbanMinimalist", "#BengaluruCafes"],
+    descriptions: {
+      luxury: "A study in Nordic minimalism and urban functionality in vibrant Indiranagar. Featuring exposed masonry, polished terrazzo floors, museum track lighting, and a private 700 sq ft botanical sky deck overlooking Bengaluru's tree canopy.",
+      cozy: "The ultimate creative urban retreat. Bathed in natural sunlight from skylights, with a soundproof study for work and a rooftop garden for evening barbecues with close friends. Walkable to everything you love in Indiranagar.",
+      instagram: "🌿 INDIRANAGAR ROOFTOP SKY LOFT! ☕🌆\n\nMinimalist aesthetics meet Bengaluru's best neighborhood vibes!\n\n✨ 3 Bed | 3 Bath | 2,400 SQ FT\n🌱 700 SF private rooftop garden & terrace\n💻 Soundproof creative home studio\n🚇 4-min walk to Metro & top craft breweries\n\nDM 'LOFT' for private viewing slots! 📲\n\n#BangaloreHomes #Indiranagar #PenthouseLiving #UrbanLoft #EstateCraft"
+    }
+  },
+  {
+    id: "prop_007",
+    address: "Lane 7, Koregaon Park, Pune, Maharashtra 411001",
+    title: "The Serene Gulmohar Garden Villa",
+    bedrooms: 4,
+    bathrooms: 4,
+    sqft: 3600,
+    price: 52000000,
+    propertyType: "Lush Botanical Garden Villa",
+    features: [
+      "Private Fenced Quarter-Acre Garden",
+      "Surrounded by Mature Canopy Trees",
+      "Natural Stone Fireplace & Sundrenched Patio",
+      "Top-Rated International Schools Proximity",
+      "Quiet Peaceful Tree-Lined Lane"
+    ],
+    keyFeatures: [
+      "Private Fenced Quarter-Acre Garden",
+      "Surrounded by Mature Canopy Trees",
+      "Natural Stone Fireplace & Sundrenched Patio",
+      "Top-Rated International Schools Proximity"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Walking distance to Osho Teerth park and German Bakery.",
+    vibeTags: ["#KoregaonPark", "#PuneVilla", "#GardenHome", "#TranquilLiving"],
+    descriptions: {
+      luxury: "Embraced by Koregaon Park's celebrated botanical canopy, this 3,600 sq ft villa offers private tranquility and understated sophistication. Natural stone finishes, vaulted ceilings, and landscaped garden verandas define this Pune luxury estate.",
+      cozy: "The storybook family home you have been dreaming of! Children can play freely in the quarter-acre fenced lawn, while mornings begin peacefully under blooming Gulmohar trees on the private patio. Close to Pune's finest schools.",
+      instagram: "🍂 DREAM GARDEN VILLA IN KOREGAON PARK! 🏡✨\n\nPune living at its absolute finest!\n\n🌳 Quarter-acre private fully-fenced garden\n☕ Sundrenched patio under blooming Gulmohar trees\n🎒 Walk to top international schools & German Bakery\n\nTag someone who loves green living! 🍃\nDM for pricing and tour details 💌\n\n#PuneRealEstate #KoregaonPark #GardenVilla #FamilyHome #EstateCraft"
+    }
+  },
+  {
+    id: "prop_008",
+    address: "Badem Road, Assagao, Goa 403507",
+    title: "Villa Sol do Oriente",
+    bedrooms: 4,
+    bathrooms: 4.5,
+    sqft: 4100,
+    price: 68000000,
+    propertyType: "Portuguese Heritage Villa",
+    features: [
+      "Restored 19th Century Indo-Portuguese Facade",
+      "Private Lagoon Swimming Pool & Sun Deck",
+      "Traditional Courtyard with Frangipani Trees",
+      "High Vaulted Ceilings & Oyster Shell Windows",
+      "10 Mins to Vagator & Anjuna Beaches"
+    ],
+    keyFeatures: [
+      "Restored 19th Century Indo-Portuguese Facade",
+      "Private Lagoon Swimming Pool & Sun Deck",
+      "Traditional Courtyard with Frangipani Trees",
+      "High Vaulted Ceilings & Oyster Shell Windows"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Quiet Assagao location near Gunpowder and bespoke designer boutiques.",
+    vibeTags: ["#GoaHeritage", "#AssagaoVillas", "#PrivatePool", "#TropicalRetreat"],
+    descriptions: {
+      luxury: "A restored 19th-century Indo-Portuguese sanctuary in Assagao's most prestigious designer quarter. Featuring antique mother-of-pearl window screens, terracotta roofing, an azure lagoon pool, and bespoke luxury hospitality finishes.",
+      cozy: "Live the laid-back Goa tropical dream. Relax with family by your private lagoon pool enveloped by frangipani blossoms, and enjoy sunset dining in the central courtyard just minutes from North Goa's top beaches.",
+      instagram: "🌴 INDO-PORTUGUESE LUXURY VILLA IN ASSAGAO, GOA! 🍹🏖️\n\nYour private slice of paradise has arrived!\n\n🏊 Private lagoon swimming pool surrounded by palms\n🌺 Central courtyard with blooming frangipani\n🌊 10 mins to Vagator & Anjuna beach sunsets\n\nSave this for your Goa vacation home vision! 🏝️\nDM for private showings 📲\n\n#GoaRealEstate #Assagao #GoaVillas #LuxuryGoa #TropicalLiving #EstateCraft"
+    }
+  },
+  {
+    id: "prop_009",
+    address: "Ballygunge Circular Road, Kolkata, West Bengal 700019",
+    title: "The Imperial Heritage Manor",
+    bedrooms: 4,
+    bathrooms: 4,
+    sqft: 3500,
+    price: 46000000,
+    propertyType: "Classic Aristocratic Estate",
+    features: [
+      "Italian Carrara Marble & Ornate Cornices",
+      "Traditional Verandah overlooking Lawns",
+      "Spacious 14ft High Ceilings",
+      "Walk to Kolkata Club & Top Schools",
+      "Historic Preserved Colonial Architecture"
+    ],
+    keyFeatures: [
+      "Italian Carrara Marble & Ornate Cornices",
+      "Traditional Verandah overlooking Lawns",
+      "Spacious 14ft High Ceilings",
+      "Walk to Kolkata Club & Top Schools"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Heart of South Kolkata's aristocratic quarter near Birla Mandir.",
+    vibeTags: ["#Ballygunge", "#KolkataHeritage", "#AristocraticLiving", "#VintageElegance"],
+    descriptions: {
+      luxury: "Reflecting the aristocratic grandeur of Old Bengal, this 3,500 sq ft manor on Ballygunge Circular Road features polished Italian marble, 14-foot hand-molded cornices, and majestic deep verandahs overlooking historic green lawns.",
+      cozy: "A stately, warm family manor steeped in literature, music, and tradition. Spacious rooms invite family celebrations, while the breeze-swept verandahs provide the ultimate setting for afternoon tea and peaceful conversations.",
+      instagram: "🏛️ ARISTOCRATIC BENGAL MANOR IN BALLYGUNGE! 📜☕\n\nPreserved colonial elegance in the heart of South Kolkata!\n\n💎 4 Bed | 4 Bath | 3,500 SQ FT\n🏛️ Soaring 14ft ceilings & Italian Carrara marble\n🌿 Deep traditional verandahs overlooking private lawns\n\nSave this for your vintage moodboard! 📌\nDM @EstateCraft for private tours 🗝️\n\n#KolkataRealEstate #Ballygunge #HeritageManor #VintageHome #EstateCraftAI"
+    }
+  },
+  {
+    id: "prop_010",
+    address: "Near ITPL, Whitefield, Bengaluru, Karnataka 560066",
+    title: "The EcoSmart Cyber Haven",
+    bedrooms: 3,
+    bathrooms: 3,
+    sqft: 2200,
+    price: 18500000,
+    propertyType: "Smart Sustainable Townhome",
+    features: [
+      "Rooftop Solar & Tesla Powerwall",
+      "Dedicated Double Work-from-Home Studio",
+      "Smart Air Purification & Water Recycling",
+      "2 Mins to Metro Station & Tech Parks",
+      "Private Turf Pet Garden"
+    ],
+    keyFeatures: [
+      "Rooftop Solar & Tesla Powerwall",
+      "Dedicated Double Work-from-Home Studio",
+      "Smart Air Purification & Water Recycling",
+      "2 Mins to Metro Station & Tech Parks"
+    ],
+    photoUrl: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    customNotes: "Zero electricity bills with rooftop solar, ultra-fast fiber internet.",
+    vibeTags: ["#WhitefieldLiving", "#SmartEcoHome", "#TechCorridor", "#ModernFamily"],
+    descriptions: {
+      luxury: "A futuristic sustainable sanctuary in Bengaluru's eastern tech corridor. Featuring integrated rooftop solar arrays, automated climate control, smart home air filtration, and designer ergonomic executive suites.",
+      cozy: "The ideal home for a modern young family or tech professionals! Enjoy near-zero electricity bills, a safe pet-friendly garden, and a 2-minute walk to the Metro and top international schools.",
+      instagram: "⚡ ECO-SMART LIVING IN WHITEFIELD BENGALURU! 💻🌱\n\nThe smart home of the future is here!\n\n☀️ 100% rooftop solar with zero energy bills\n🧑‍💻 Dual high-speed work-from-home studios\n🚇 2-min walk to Metro & ITPL tech campus\n🐾 Private turf garden for pets\n\nDM 'ECO' for pricing & open house slots! 📲\n\n#Whitefield #BangaloreRealEstate #SmartHome #EcoFriendly #EstateCraft"
+    }
+  }
+];
+
+export const POPULAR_FEATURE_TAGS = [
+  "Arabian Sea Views",
+  "Private Plunge Pool",
+  "Italian Marble Flooring",
+  "Vastu Compliant",
+  "Teakwood Veranda",
+  "100% Rooftop Solar",
+  "Smart Home Tech",
+  "Private Garden & Lawn",
+  "Home Theatre Suite",
+  "Soundproof Home Studio",
+  "Gated Society with Security",
+  "Walk to Metro Station",
+  "Top School District",
+  "EV Fast Charging",
+  "Private Golf Course Views",
+  "Centenarian Banyan Trees"
+];

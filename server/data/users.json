@@ -1,0 +1,69 @@
+[
+  {
+    "id": "usr_agent_001",
+    "name": "Vikram ",
+    "email": "vikram@sothebysrealty.in",
+    "role": "agent",
+    "agency": "Sotheby's International Realty Mumbai",
+    "reraNumber": "A51900018420",
+    "phone": "+91 98200 12345",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-18T10:00:00Z",
+    "updatedAt": "2026-09-19T07:48:39.496Z"
+  },
+  {
+    "id": "usr_buyer_001",
+    "name": "Ananya Sharma",
+    "email": "ananya.sharma@gmail.com",
+    "role": "buyer",
+    "targetCity": "Bengaluru / Mumbai",
+    "budgetRange": "₹5 Cr - ₹15 Cr",
+    "phone": "+91 98450 67890",
+    "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T08:00:00Z"
+  },
+  {
+    "id": "usr_buyer_1789801278180",
+    "name": "surya",
+    "email": "surya@gmail.com",
+    "role": "buyer",
+    "phone": "+91 98000 00000",
+    "targetCity": "Mumbai",
+    "budgetRange": "₹5 Cr - ₹45Cr",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T07:01:18.180Z"
+  },
+  {
+    "id": "usr_agent_1789803460839",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789803460837@test.com",
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T07:37:40.839Z"
+  },
+  {
+    "id": "usr_agent_1789803785956",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789803785953@test.com",
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T07:43:05.956Z"
+  },
+  {
+    "id": "usr_agent_1789805701978",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789805701975@test.com",
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T08:15:01.978Z"
+  }
+]

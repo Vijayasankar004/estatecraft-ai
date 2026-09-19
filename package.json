@@ -1,0 +1,25 @@
+{
+  "name": "ai-realestate-generator",
+  "version": "1.0.0",
+  "description": "AI Real Estate Listing Description & Conversational Match Engine",
+  "private": true,
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "npm --prefix server start",
+    "client": "npm --prefix client dev",
+    "build": "npm --prefix client run build",
+    "test": "npm --prefix server test",
+    "install-all": "npm --prefix server install && npm --prefix client install"
+  },
+  "keywords": [
+    "real-estate",
+    "ai",
+    "gemini",
+    "openai",
+    "react",
+    "express",
+    "tailwind"
+  ],
+  "author": "",
+  "license": "MIT"
+}

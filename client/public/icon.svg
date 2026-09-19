@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="estateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#090d16"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="url(#estateGrad)" stroke-width="8" opacity="0.4"/>
+  <path d="M256 96 L400 216 L400 400 A16 16 0 0 1 384 416 L128 416 A16 16 0 0 1 112 400 L112 216 Z" fill="none" stroke="url(#estateGrad)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M208 416 L208 288 L304 288 L304 416" fill="none" stroke="#10b981" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="330" cy="180" r="16" fill="#10b981"/>
+  <path d="M256 160 L280 200 L232 200 Z" fill="#14b8a6"/>
+</svg>
