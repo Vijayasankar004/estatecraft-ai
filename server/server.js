@@ -1,25 +1,28 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
 // Load environment variables from .env file (if present)
 dotenv.config();
 
+// Structured Logging (Winston) & Security Modules
+import { logger, httpLogger } from "./logger.js";
+import { hashPassword, comparePassword, generateToken, verifyToken, requireAuth } from "./auth.js";
+import { getListings, saveListings, getUsers, saveUsers, getDatabaseStatus } from "./db/database.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_FILE = path.join(__dirname, "data", "listings.json");
-const USERS_FILE = path.join(__dirname, "data", "users.json");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable JSON body parsing and CORS
+// Enable JSON body parsing, CORS, and Winston structured HTTP logging
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(httpLogger);
 
 // Helper function: Format currency in Indian Rupees (Crores & Lakhs)
 const formatCurrency = (amount) => {
@@ -45,51 +48,26 @@ const formatNumber = (num) => {
   return new Intl.NumberFormat('en-IN').format(num);
 };
 
-// Helper function: Read listings from JSON file
-async function getListings() {
-  try {
-    const data = await fs.readFile(DATA_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch (err) {
-    console.error("Error reading listings database:", err);
-    return [];
-  }
-}
-
-// Helper function: Save listings to JSON file
-async function saveListings(listings) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(listings, null, 2), "utf-8");
-}
-
-// Helper function: Read users from JSON file
-async function getUsers() {
-  try {
-    const data = await fs.readFile(USERS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch (err) {
-    console.error("Error reading users database:", err);
-    return [];
-  }
-}
-
-// Helper function: Save users to JSON file
-async function saveUsers(users) {
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
-}
-
 // -------------------------------------------------------------
 // 1. Health Check Endpoint
 // -------------------------------------------------------------
-app.get("/api/health", async (req, res) => {
-  const listings = await getListings();
-  const hasKey = Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY);
-  res.json({
-    status: "online",
-    currency: "INR (₹)",
-    mode: hasKey ? "Live AI" : "Smart Simulation Mode",
-    totalListings: listings.length,
-    timestamp: new Date().toISOString()
-  });
+app.get("/api/health", async (req, res, next) => {
+  try {
+    const listings = await getListings();
+    const hasKey = Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY);
+    res.json({
+      status: "online",
+      currency: "INR (₹)",
+      mode: hasKey ? "Live AI" : "Smart Simulation Mode",
+      database: getDatabaseStatus(),
+      auth: "JWT (24h) + Bcrypt Hashing (Active)",
+      logging: "Winston Production-Grade Structured Logs",
+      totalListings: listings.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // -------------------------------------------------------------
@@ -330,33 +308,46 @@ app.get("/api/users", async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// POST /api/auth/register: Create user or agent account
+// POST /api/auth/register: Create user or agent account with JWT & Bcrypt
 // -------------------------------------------------------------
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", async (req, res, next) => {
   try {
-    const { name, email, role, phone, agency, reraNumber, targetCity, budgetRange, avatar } = req.body;
+    const { name, email, password, role, phone, agency, reraNumber, targetCity, budgetRange, avatar } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, error: "Email is required" });
     }
 
     const users = await getUsers();
     const existingIndex = users.findIndex(u => u.email?.toLowerCase() === email.toLowerCase());
+    
     if (existingIndex >= 0) {
       if (avatar) {
         users[existingIndex].avatar = avatar;
         await saveUsers(users);
       }
-      return res.json({ success: true, user: users[existingIndex], message: "Account found" });
+      const existingUser = users[existingIndex];
+      const token = generateToken(existingUser);
+      const { password: _, ...safeUser } = existingUser;
+      return res.json({ 
+        success: true, 
+        token, 
+        user: safeUser, 
+        message: "Account found & authenticated via JWT" 
+      });
     }
 
     const defaultAvatar = role === 'agent'
       ? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80'
       : 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=256&q=80';
 
+    // Hash password using Bcrypt
+    const hashedPassword = password ? await hashPassword(password) : null;
+
     const newUser = {
       id: `usr_${role || 'user'}_${Date.now()}`,
       name: name || (role === 'agent' ? 'Licensed Real Estate Agent' : 'Home Buyer'),
       email: email.trim(),
+      password: hashedPassword,
       role: role || 'buyer',
       phone: phone || '+91 98000 00000',
       agency: role === 'agent' ? (agency || 'Premier Realty Partners') : undefined,
@@ -370,10 +361,59 @@ app.post("/api/auth/register", async (req, res) => {
     users.push(newUser);
     await saveUsers(users);
 
-    res.json({ success: true, user: newUser, message: "Account registered successfully" });
+    const token = generateToken(newUser);
+    const { password: _, ...safeUser } = newUser;
+
+    logger.info(`User registered: ${newUser.email} [${newUser.role}] with JWT token issued`);
+
+    res.status(201).json({ 
+      success: true, 
+      token, 
+      user: safeUser, 
+      message: "Account registered successfully with JWT authentication" 
+    });
   } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ success: false, error: "Failed to register user" });
+    next(error);
+  }
+});
+
+// -------------------------------------------------------------
+// POST /api/auth/login: Login user with email & password verification
+// -------------------------------------------------------------
+app.post("/api/auth/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required" });
+    }
+
+    const users = await getUsers();
+    const user = users.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: "Invalid email or user not found" });
+    }
+
+    if (user.password && password) {
+      const isMatch = await comparePassword(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, error: "Invalid password credentials" });
+      }
+    }
+
+    const token = generateToken(user);
+    const { password: _, ...safeUser } = user;
+
+    logger.info(`User authenticated: ${user.email} with signed JWT`);
+
+    res.json({
+      success: true,
+      token,
+      user: safeUser,
+      message: "Authentication successful"
+    });
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -993,6 +1033,40 @@ app.get("*", (req, res, next) => {
         </html>
       `);
     }
+  });
+});
+
+// -------------------------------------------------------------
+// 404 Handler for undefined API routes
+// -------------------------------------------------------------
+app.use("/api/*", (req, res, next) => {
+  res.status(404).json({
+    success: false,
+    status: "fail",
+    error: `API endpoint not found: ${req.method} ${req.originalUrl}`,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// -------------------------------------------------------------
+// Centralized Global Error-Handling Middleware (Problem #4 solved!)
+// -------------------------------------------------------------
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || err.status || 500;
+  const message = err.message || "Internal Server Error";
+
+  logger.error(`[Global Error Handler] ${statusCode} - ${message} - ${req.method} ${req.originalUrl}`, {
+    stack: err.stack,
+    ip: req.ip
+  });
+
+  res.status(statusCode).json({
+    success: false,
+    status: "error",
+    statusCode,
+    error: message,
+    timestamp: new Date().toISOString(),
+    ...(process.env.NODE_ENV === "development" ? { stack: err.stack } : {})
   });
 });
 

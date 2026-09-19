@@ -1,5 +1,56 @@
 [
   {
+    "id": "prop_auth_test_1789822242793",
+    "address": "702 Sea View Villa, Bandra West, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 120000000,
+    "agentId": "usr_agent_001",
+    "agentEmail": "vikram@sothebysrealty.in",
+    "agentName": "Vikram Malhotra",
+    "photos": [
+      "https://images.unsplash.com/photo-101.jpg",
+      "https://images.unsplash.com/photo-103.jpg"
+    ],
+    "agency": "Sotheby's International Realty Mumbai",
+    "photoUrl": "https://images.unsplash.com/photo-101.jpg",
+    "createdAt": "2026-09-19T12:50:42.801Z"
+  },
+  {
+    "id": "prop_auth_test_1789822199144",
+    "address": "702 Sea View Villa, Bandra West, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 120000000,
+    "agentId": "usr_agent_001",
+    "agentEmail": "vikram@sothebysrealty.in",
+    "agentName": "Vikram Malhotra",
+    "photos": [
+      "https://images.unsplash.com/photo-101.jpg",
+      "https://images.unsplash.com/photo-103.jpg"
+    ],
+    "agency": "Sotheby's International Realty Mumbai",
+    "photoUrl": "https://images.unsplash.com/photo-101.jpg",
+    "createdAt": "2026-09-19T12:49:59.152Z"
+  },
+  {
+    "id": "prop_auth_test_1789822181217",
+    "address": "702 Sea View Villa, Bandra West, Mumbai",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 120000000,
+    "agentId": "usr_agent_001",
+    "agentEmail": "vikram@sothebysrealty.in",
+    "agentName": "Vikram Malhotra",
+    "photos": [
+      "https://images.unsplash.com/photo-101.jpg",
+      "https://images.unsplash.com/photo-103.jpg"
+    ],
+    "agency": "Sotheby's International Realty Mumbai",
+    "photoUrl": "https://images.unsplash.com/photo-101.jpg",
+    "createdAt": "2026-09-19T12:49:41.223Z"
+  },
+  {
     "id": "prop-1789818916817",
     "address": "Worli Sea Face, Worli, Mumbai, Maharashtra 400030",
     "bedrooms": 5,

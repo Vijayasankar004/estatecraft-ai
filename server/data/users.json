@@ -186,5 +186,77 @@
     "reraNumber": "RERA/MH/2026/0999",
     "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
     "createdAt": "2026-09-19T11:47:51.400Z"
+  },
+  {
+    "id": "usr_agent_1789822181168",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789822181164@test.com",
+    "password": null,
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T12:49:41.168Z"
+  },
+  {
+    "id": "usr_agent_1789822181395",
+    "name": "JWT Test Agent",
+    "email": "jwt_agent_1789822181260@test.com",
+    "password": "$2b$10$V0j5dLzTcvefX/TChEQAEedeZwIkSgjArpZlJPIayxONnLuoZgc22",
+    "role": "agent",
+    "phone": "+91 98000 00000",
+    "agency": "Bangalore Luxury Homes",
+    "reraNumber": "RERA/MH/2026/0491",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T12:49:41.395Z"
+  },
+  {
+    "id": "usr_agent_1789822199106",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789822199102@test.com",
+    "password": null,
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T12:49:59.106Z"
+  },
+  {
+    "id": "usr_agent_1789822199308",
+    "name": "JWT Test Agent",
+    "email": "jwt_agent_1789822199190@test.com",
+    "password": "$2b$10$WGxEeXiX.lNcR9ZIs3ltW.sP5ReP8flXJYHZcILr1uNuqCeIFm6RS",
+    "role": "agent",
+    "phone": "+91 98000 00000",
+    "agency": "Bangalore Luxury Homes",
+    "reraNumber": "RERA/MH/2026/0491",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T12:49:59.308Z"
+  },
+  {
+    "id": "usr_agent_1789822242742",
+    "name": "Evaluator Agent",
+    "email": "evaluator_1789822242738@test.com",
+    "password": null,
+    "role": "agent",
+    "phone": "+91 99999 88888",
+    "agency": "Premier AI Realty",
+    "reraNumber": "RERA/MH/2026/0999",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T12:50:42.742Z"
+  },
+  {
+    "id": "usr_agent_1789822242987",
+    "name": "JWT Test Agent",
+    "email": "jwt_agent_1789822242862@test.com",
+    "password": "$2b$10$KIvvy8jLV.jo3yT6WUepZOThR2sCLFEFa0xpOOYwEJYTA1IOIuNQy",
+    "role": "agent",
+    "phone": "+91 98000 00000",
+    "agency": "Bangalore Luxury Homes",
+    "reraNumber": "RERA/MH/2026/0491",
+    "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
+    "createdAt": "2026-09-19T12:50:42.987Z"
   }
 ]

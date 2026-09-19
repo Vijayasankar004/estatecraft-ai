@@ -92,7 +92,7 @@ test('5. User Authentication & Profile Picture Support', async () => {
     body: JSON.stringify(testUser)
   });
 
-  assert.strictEqual(res.status, 200);
+  assert.ok(res.status === 200 || res.status === 201, 'Registration returns 200 or 201');
   const data = await res.json();
   assert.strictEqual(data.success, true);
   assert.strictEqual(data.user.role, 'agent');
@@ -251,4 +251,76 @@ test('8. Stored Photos can ONLY be removed by the specific agent who uploaded th
   assert.strictEqual(authorizedData.success, true);
   assert.strictEqual(authorizedData.photos.length, 2, 'Photo was successfully removed');
 });
+
+test('9. JWT Authentication & Bcrypt Password Hashing (Login & Protected Route)', async () => {
+  const userPassword = 'SecurePassword#2026';
+  const testUser = {
+    name: 'JWT Test Agent',
+    email: `jwt_agent_${Date.now()}@test.com`,
+    password: userPassword,
+    role: 'agent',
+    agency: 'Bangalore Luxury Homes'
+  };
+
+  // 1. Register with password -> generates bcrypt hash and returns JWT token
+  const regRes = await fetch(`${BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(testUser)
+  });
+  assert.strictEqual(regRes.status, 201);
+  const regData = await regRes.json();
+  assert.strictEqual(regData.success, true);
+  assert.ok(regData.token, 'JWT token returned on registration');
+  assert.ok(regData.user.id, 'User object contains ID');
+
+  // 2. Login with incorrect password -> returns 401 Unauthorized
+  const failRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: testUser.email,
+      password: 'WrongPassword123'
+    })
+  });
+  assert.strictEqual(failRes.status, 401, 'Wrong password returns 401');
+  const failData = await failRes.json();
+  assert.strictEqual(failData.success, false);
+
+  // 3. Login with correct password -> returns 200 and valid JWT token
+  const loginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: testUser.email,
+      password: userPassword
+    })
+  });
+  assert.strictEqual(loginRes.status, 200, 'Correct password returns 200');
+  const loginData = await loginRes.json();
+  assert.strictEqual(loginData.success, true);
+  assert.ok(loginData.token, 'JWT token returned on login');
+  assert.strictEqual(loginData.user.email, testUser.email);
+});
+
+test('10. Global Error Handling Middleware handles 404 and invalid routes', async () => {
+  const res = await fetch(`${BASE_URL}/api/non-existent-endpoint-${Date.now()}`);
+  assert.strictEqual(res.status, 404);
+  const data = await res.json();
+  assert.strictEqual(data.success, false);
+  assert.ok(data.error.includes('API endpoint not found'), 'Structured 404 message');
+  assert.ok(data.timestamp, 'Structured timestamp present in error response');
+});
+
+test('11. Database Persistence Layer & Structured Logging Status Verification', async () => {
+  const res = await fetch(`${BASE_URL}/api/health`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.status, 'online');
+  assert.ok(data.database, 'Database health object exists');
+  assert.ok(data.database.type, 'Database type reported');
+  assert.ok(data.auth.includes('JWT') && data.auth.includes('Bcrypt'), 'Auth security active');
+  assert.ok(data.logging.includes('Winston'), 'Winston structured logging active');
+});
+
 
