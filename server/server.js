@@ -410,173 +410,311 @@ app.post("/api/match-properties", async (req, res) => {
       maxBudget = parseFloat(numMatch[1].replace(/,/g, ''));
     }
 
-    // 2. Location keywords dictionary
-    const LOCATION_KEYWORDS = [
-      { name: "Mumbai", terms: ["mumbai", "worli", "bandra", "juhu", "sea face", "marine drive", "south mumbai"] },
-      { name: "Bengaluru", terms: ["bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield", "sarjapur"] },
-      { name: "Gurugram", terms: ["gurugram", "gurgaon", "dlf", "golf course", "cyber city"] },
-      { name: "Goa", terms: ["goa", "assagao", "anjuna", "candolim", "panjim"] },
-      { name: "Hyderabad", terms: ["hyderabad", "jubilee", "banjara", "gachibowli", "hitec"] },
-      { name: "Chennai", terms: ["chennai", "boat club", "adyar", "poes garden", "ecr"] },
-      { name: "Pune", terms: ["pune", "koregaon", "kalyani nagar", "baner"] },
-      { name: "Kolkata", terms: ["kolkata", "ballygunge", "alipore", "salt lake"] }
+    // 2. Location dictionary with Cities & Localities
+    const LOCATION_DB = [
+      {
+        city: "Mumbai",
+        cityTerms: ["mumbai", "bombay", "south mumbai", "navi mumbai"],
+        localities: ["worli", "bandra", "juhu", "sea face", "marine drive", "colaba", "lower parel", "mahalaxmi", "altamount", "malabar hill"]
+      },
+      {
+        city: "Bengaluru",
+        cityTerms: ["bengaluru", "bangalore"],
+        localities: ["koramangala", "indiranagar", "whitefield", "sarjapur", "sadashivanagar", "lavelle road", "mg road", "hsr"]
+      },
+      {
+        city: "Gurugram",
+        cityTerms: ["gurugram", "gurgaon", "ncr", "delhi ncr"],
+        localities: ["dlf", "dlf phase 5", "golf course", "golf course road", "cyber city", "sohna road"]
+      },
+      {
+        city: "Goa",
+        cityTerms: ["goa", "north goa", "south goa"],
+        localities: ["assagao", "anjuna", "candolim", "panjim", "siolim", "vagator", "calangute", "morjim"]
+      },
+      {
+        city: "Hyderabad",
+        cityTerms: ["hyderabad"],
+        localities: ["jubilee hills", "jubilee", "banjara hills", "banjara", "gachibowli", "hitec city", "madhapur"]
+      },
+      {
+        city: "Chennai",
+        cityTerms: ["chennai", "madras"],
+        localities: ["boat club", "boat club road", "adyar", "poes garden", "ecr", "ra puram", "besant nagar"]
+      },
+      {
+        city: "Pune",
+        cityTerms: ["pune"],
+        localities: ["koregaon park", "koregaon", "kalyani nagar", "baner", "viman nagar"]
+      },
+      {
+        city: "Kolkata",
+        cityTerms: ["kolkata", "calcutta"],
+        localities: ["ballygunge", "alipore", "salt lake", "new town"]
+      }
     ];
 
-    // Detect if query specifies location
-    const matchedLocationObj = LOCATION_KEYWORDS.find(loc => loc.terms.some(t => queryLower.includes(t)));
-    const locationQuery = matchedLocationObj ? matchedLocationObj.name : null;
+    // Safe word-boundary match helper (prevents false positives like 'goals' matching 'goa')
+    const containsWord = (text, term) => {
+      if (!text || !term) return false;
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(?:^|[^a-zA-Z0-9])${escaped}(?:$|[^a-zA-Z0-9])`, 'i').test(text);
+    };
 
-    // 3. Style keywords dictionary
-    const STYLE_KEYWORDS = [
-      { name: "luxury", terms: ["luxury", "upscale", "palatial", "penthouse", "sea-facing", "sea", "ocean"] },
-      { name: "cozy", terms: ["cozy", "warm", "family", "charm", "heritage", "portuguese", "victorian", "cottage"] },
-      { name: "minimalist", terms: ["minimalist", "modern", "contemporary", "clean", "sleek", "smart home", "eco"] }
+    // Detect requested city and requested locality from query
+    let requestedCity = null;
+    let requestedLocality = null;
+
+    for (const locEntry of LOCATION_DB) {
+      const hasCity = locEntry.cityTerms.some(t => containsWord(queryLower, t));
+      const matchedLoc = locEntry.localities.find(l => containsWord(queryLower, l));
+
+      if (hasCity || matchedLoc) {
+        requestedCity = locEntry.city;
+        if (matchedLoc) {
+          requestedLocality = matchedLoc;
+        }
+        break;
+      }
+    }
+
+    // 3. BHK / Bedroom count detection
+    let requestedBhk = null;
+    const bhkMatch = queryLower.match(/(\d+)\s*(?:bhk|bedroom|bed|beds)\b/i);
+    if (bhkMatch) {
+      requestedBhk = parseInt(bhkMatch[1], 10);
+    }
+
+    // 4. Style & Architecture detection
+    const STYLE_DEFINITIONS = [
+      { name: "villa", terms: ["villa", "independent villa", "bungalow", "independent house", "estate"] },
+      { name: "penthouse", terms: ["penthouse", "sky mansion", "glass penthouse", "sky loft", "top floor"] },
+      { name: "heritage", terms: ["heritage", "portuguese", "colonial", "vintage", "restored", "traditional"] },
+      { name: "apartment", terms: ["apartment", "flat", "condo", "high rise", "suite"] },
+      { name: "luxury", terms: ["luxury", "ultra-luxury", "upscale", "palatial", "sea-facing", "sea facing"] },
+      { name: "modern", terms: ["modern", "contemporary", "minimalist", "tech", "sleek"] },
+      { name: "cozy", terms: ["cozy", "warm", "family"] }
     ];
 
-    const requestedStyles = STYLE_KEYWORDS.filter(s => s.terms.some(t => queryLower.includes(t))).map(s => s.name);
+    const requestedStyles = STYLE_DEFINITIONS.filter(s => s.terms.some(t => queryLower.includes(t))).map(s => s.name);
 
-    // 4. Feature keywords dictionary
-    const FEATURE_KEYWORDS = [
-      { name: "private pool", terms: ["pool", "plunge", "swimming"] },
-      { name: "garden", terms: ["garden", "lawn", "courtyard", "backyard"] },
-      { name: "schools nearby", terms: ["school", "schools", "kids"] },
-      { name: "golf views", terms: ["golf", "fairway"] },
-      { name: "sea views", terms: ["sea view", "ocean view", "sea-facing"] },
-      { name: "elevator", terms: ["elevator", "lift"] },
-      { name: "marble flooring", terms: ["marble", "italian"] },
-      { name: "smart home", terms: ["smart", "solar", "automation"] }
+    // 5. Feature detection
+    const FEATURE_DEFINITIONS = [
+      { name: "private swimming pool", terms: ["pool", "plunge", "swimming", "swimming pool", "private pool"] },
+      { name: "Arabian Sea views", terms: ["sea view", "sea views", "ocean view", "arabian sea", "sea-facing", "sea facing"] },
+      { name: "championship golf views", terms: ["golf", "fairway", "golf course"] },
+      { name: "landscaped garden", terms: ["garden", "lawn", "courtyard", "zen", "koi", "backyard"] },
+      { name: "private elevator", terms: ["elevator", "lift", "private elevator"] },
+      { name: "smart automation & solar", terms: ["smart", "solar", "automation", "tesla", "ev"] },
+      { name: "home theatre suite", terms: ["theatre", "theater", "cinema"] },
+      { name: "Italian marble flooring", terms: ["marble", "italian", "calacatta"] },
+      { name: "premier schools nearby", terms: ["school", "schools", "kids"] }
     ];
 
-    const requestedFeatures = FEATURE_KEYWORDS.filter(f => f.terms.some(t => queryLower.includes(t))).map(f => f.name);
+    const requestedFeatures = FEATURE_DEFINITIONS.filter(f => f.terms.some(t => queryLower.includes(t))).map(f => f.name);
 
-    // Score every property separately with weighted criteria out of 100
+    // Score every property separately with strict, honest weighted criteria out of 100
     const scoredListings = listings.map((listing) => {
-      const listingText = [
+      const listingFullText = [
         listing.title || "",
         listing.address || "",
         listing.propertyType || "",
         ...(listing.features || []),
         ...(listing.keyFeatures || []),
+        listing.customNotes || "",
         listing.descriptions?.luxury || "",
         listing.descriptions?.cozy || "",
         listing.descriptions?.minimalist || "",
         listing.descriptions?.instagram || ""
       ].join(" ").toLowerCase();
 
-      // --- A. Location Fit (40% Weight) ---
+      // --- A. Location Fit (40% Weight: 0 to 40) ---
       let locationScore = 0;
       let locationHighlight = "";
-      if (locationQuery) {
-        const matchesLoc = matchedLocationObj.terms.some(term => listingText.includes(term));
-        if (matchesLoc) {
-          locationScore = 40;
-          locationHighlight = `${matchedLocationObj.name} location`;
+      let locationStatus = "neutral";
+
+      const listingLocationText = [listing.address || "", listing.title || ""].join(" ").toLowerCase();
+
+      if (requestedCity) {
+        const cityEntry = LOCATION_DB.find(c => c.city.toLowerCase() === requestedCity.toLowerCase());
+        const listingInCity = cityEntry ? (
+          cityEntry.cityTerms.some(t => containsWord(listingLocationText, t)) ||
+          cityEntry.localities.some(l => containsWord(listingLocationText, l))
+        ) : containsWord(listingLocationText, requestedCity.toLowerCase());
+
+        if (listingInCity) {
+          // If a specific locality was asked for (e.g. Worli, Koramangala, Assagao, DLF Phase 5)
+          if (requestedLocality) {
+            const matchesLocality = containsWord(listingLocationText, requestedLocality.toLowerCase());
+            if (matchesLocality) {
+              locationScore = 40; // Perfect 100% location fit
+              locationHighlight = `${requestedLocality.charAt(0).toUpperCase() + requestedLocality.slice(1)} location`;
+              locationStatus = "exact";
+            } else {
+              locationScore = 28; // Same city, nearby locality (70% location fit)
+              locationHighlight = `${requestedCity} location`;
+              locationStatus = "same_city";
+            }
+          } else {
+            locationScore = 40; // Requested city match
+            locationHighlight = `${requestedCity} location`;
+            locationStatus = "exact";
+          }
         } else {
-          locationScore = 12; // Mismatch penalty
+          // Completely different city -> 0 / 40!
+          locationScore = 0;
+          locationHighlight = "";
+          locationStatus = "different_city";
         }
       } else {
-        // No location requested: evaluate location quality neutrally
-        locationScore = 32;
-        locationHighlight = `${listing.address.split(',')[0]} location`;
+        // No location requested: valid for any market
+        locationScore = 36;
+        locationHighlight = `${(listing.address || "").split(',')[0]} location`;
+        locationStatus = "neutral";
       }
 
-      // --- B. Budget Fit (30% Weight) ---
+      // --- B. Budget Fit (30% Weight: 0 to 30) ---
       let budgetScore = 0;
       let budgetHighlight = "";
+
       if (maxBudget) {
         if (listing.price <= maxBudget) {
-          if (listing.price >= maxBudget * 0.70) {
-            budgetScore = 30; // Optimal match within budget
+          if (listing.price >= maxBudget * 0.60) {
+            budgetScore = 30; // 100% budget fit
           } else {
             budgetScore = 26; // Well below budget
           }
           budgetHighlight = `pricing within your ${formatCurrency(maxBudget)} budget`;
         } else {
-          const ratio = listing.price / maxBudget;
-          if (ratio <= 1.10) {
-            budgetScore = 18; // Slightly over budget
-          } else if (ratio <= 1.25) {
+          const excessRatio = (listing.price - maxBudget) / maxBudget;
+          if (excessRatio <= 0.05) {
+            budgetScore = 20; // within 5% stretch
+            budgetHighlight = `pricing near your ${formatCurrency(maxBudget)} budget`;
+          } else if (excessRatio <= 0.15) {
             budgetScore = 10;
+            budgetHighlight = `pricing slightly above budget`;
+          } else if (excessRatio <= 0.25) {
+            budgetScore = 4;
+            budgetHighlight = `pricing above budget`;
           } else {
-            budgetScore = 5;
+            budgetScore = 0; // Way over budget (> 25% over)
+            budgetHighlight = `pricing at ${formatCurrency(listing.price)} (exceeds budget)`;
           }
-          budgetHighlight = `value at ${formatCurrency(listing.price)}`;
         }
       } else {
-        budgetScore = 25; // Neutral competitive value
+        budgetScore = 28;
         budgetHighlight = `competitive ${formatCurrency(listing.price)} pricing`;
       }
 
-      // --- C. Style Match (20% Weight) ---
+      // --- C. Style Match (20% Weight: 0 to 20) ---
       let styleScore = 0;
       let styleHighlight = "";
-      if (requestedStyles.length > 0) {
-        const foundStyles = requestedStyles.filter(style => {
-          const styleObj = STYLE_KEYWORDS.find(s => s.name === style);
-          return styleObj && styleObj.terms.some(t => listingText.includes(t));
-        });
 
-        if (foundStyles.length > 0) {
-          styleScore = Math.min(20, 14 + foundStyles.length * 3);
-          styleHighlight = `${foundStyles.join(' and ')} style`;
+      // Bedroom alignment (up to 8 pts)
+      let bhkScore = 0;
+      if (requestedBhk) {
+        if (listing.bedrooms === requestedBhk) {
+          bhkScore = 8;
+        } else if (Math.abs(listing.bedrooms - requestedBhk) === 1) {
+          bhkScore = 4;
         } else {
-          styleScore = 8;
-          styleHighlight = `${listing.propertyType} architecture`;
+          bhkScore = 0;
         }
       } else {
-        styleScore = 16;
+        bhkScore = 6;
+      }
+
+      // Architecture & Vibe alignment (up to 12 pts)
+      let archScore = 0;
+      let matchedStyles = [];
+      if (requestedStyles.length > 0) {
+        matchedStyles = requestedStyles.filter(sName => {
+          const sObj = STYLE_DEFINITIONS.find(s => s.name === sName);
+          return sObj && sObj.terms.some(t => listingFullText.includes(t));
+        });
+
+        if (matchedStyles.length >= 2) {
+          archScore = 12;
+        } else if (matchedStyles.length === 1) {
+          archScore = 8;
+        } else {
+          archScore = 1;
+        }
+        styleHighlight = matchedStyles.length > 0 ? `${matchedStyles.join(' and ')} style` : `${listing.propertyType} architecture`;
+      } else {
+        archScore = 10;
         styleHighlight = `${listing.propertyType} design`;
       }
 
-      // --- D. Features Match (10% Weight) ---
+      styleScore = Math.min(20, Math.max(0, bhkScore + archScore));
+
+      // --- D. Features Match (10% Weight: 0 to 10) ---
       let featuresScore = 0;
-      let featureHighlights = [];
+      let matchedFeaturesList = [];
+
       if (requestedFeatures.length > 0) {
-        const foundFeatures = requestedFeatures.filter(fName => {
-          const featObj = FEATURE_KEYWORDS.find(f => f.name === fName);
-          return featObj && featObj.terms.some(t => listingText.includes(t));
+        matchedFeaturesList = requestedFeatures.filter(fName => {
+          const fObj = FEATURE_DEFINITIONS.find(f => f.name === fName);
+          return fObj && fObj.terms.some(t => listingFullText.includes(t));
         });
 
-        if (foundFeatures.length >= 2) {
+        const ratio = matchedFeaturesList.length / requestedFeatures.length;
+        if (ratio >= 0.99) {
           featuresScore = 10;
-          featureHighlights = foundFeatures;
-        } else if (foundFeatures.length === 1) {
-          featuresScore = 7;
-          featureHighlights = foundFeatures;
+        } else if (ratio >= 0.5) {
+          featuresScore = 6;
         } else {
-          featuresScore = 4;
+          featuresScore = 0;
         }
       } else {
         featuresScore = 8;
         const feats = listing.features || listing.keyFeatures || [];
         if (feats.length > 0) {
-          featureHighlights = [feats[0].toLowerCase()];
+          matchedFeaturesList = [feats[0]];
         }
       }
 
       // Final score calculation out of 100
-      const totalScore = Math.min(98, Math.max(35, Math.round(locationScore + budgetScore + styleScore + featuresScore)));
+      const totalScore = Math.min(100, Math.max(5, locationScore + budgetScore + styleScore + featuresScore));
 
-      // Generate concise One-Line AI explanation (Example: "92% Match — This property has the garden, cozy style, and nearby schools the buyer requested.")
-      const highlights = [];
-      if (featureHighlights.length > 0) {
-        highlights.push(featureHighlights.join(" and "));
-      }
-      if (styleHighlight) {
-        highlights.push(styleHighlight);
-      }
-      if (locationHighlight) {
-        highlights.push(locationHighlight);
-      }
+      // Compose clean, accurate One-Line AI Explanation
+      const positiveHighlights = [];
+      if (locationScore >= 28 && locationHighlight) positiveHighlights.push(locationHighlight);
+      if (requestedBhk && listing.bedrooms === requestedBhk) positiveHighlights.push(`${listing.bedrooms} BHK`);
+      if (styleScore >= 12 && styleHighlight) positiveHighlights.push(styleHighlight);
+      if (matchedFeaturesList.length > 0) positiveHighlights.push(matchedFeaturesList.slice(0, 2).join(" and "));
+      if (maxBudget && listing.price <= maxBudget) positiveHighlights.push("within budget pricing");
 
-      const cleanHighlightsStr = highlights.length > 0 ? highlights.join(", ") : "desired lifestyle criteria";
-      const oneLineExplanation = `${totalScore}% Match — This property has the ${cleanHighlightsStr} the buyer requested.`;
+      let oneLineExplanation = "";
+      if (locationStatus === "different_city") {
+        // Honest disclosure of different city
+        const propCity = (listing.address || "").includes("Mumbai") ? "Mumbai"
+          : (listing.address || "").includes("Bengaluru") ? "Bengaluru"
+          : (listing.address || "").includes("Goa") ? "Goa"
+          : (listing.address || "").includes("Gurugram") ? "Gurugram"
+          : (listing.address || "").includes("Hyderabad") ? "Hyderabad"
+          : (listing.address || "").includes("Chennai") ? "Chennai"
+          : "another city";
+        oneLineExplanation = `${totalScore}% Match — This property has the ${positiveHighlights.length > 0 ? positiveHighlights.join(", ") : "luxury qualities"} the buyer requested, but is located in ${propCity} instead of ${requestedCity}.`;
+      } else if (maxBudget && listing.price > maxBudget * 1.15) {
+        oneLineExplanation = `${totalScore}% Match — This property has the ${positiveHighlights.length > 0 ? positiveHighlights.join(", ") : "desired features"} the buyer requested, though asking price (${formatCurrency(listing.price)}) exceeds the target budget.`;
+      } else {
+        const cleanHighlightsStr = positiveHighlights.length > 0 ? positiveHighlights.join(", ") : "desired lifestyle criteria";
+        oneLineExplanation = `${totalScore}% Match — This property has the ${cleanHighlightsStr} the buyer requested.`;
+      }
 
       return {
         ...listing,
         matchScore: totalScore,
         matchReason: oneLineExplanation,
         matchReasoning: oneLineExplanation,
+        oneLineExplanation,
+        matchedTags: [
+          ...(locationScore >= 28 ? [locationHighlight || `${requestedCity} area`] : []),
+          ...(requestedBhk && listing.bedrooms === requestedBhk ? [`${listing.bedrooms} BHK Exact`] : []),
+          ...(maxBudget && listing.price <= maxBudget ? [`Under ${formatCurrency(maxBudget)}`] : []),
+          ...matchedFeaturesList.slice(0, 3)
+        ].filter(Boolean),
         weightedBreakdown: {
           location: locationScore,
           locationMax: 40,
